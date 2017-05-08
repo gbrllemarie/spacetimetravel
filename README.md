@@ -1,5 +1,5 @@
 
-![Space Time Travel](/docs/spacetimetravel.jpg?raw=true "Space Time Travel")
+![Space Time Travel](/docs/spacetimetravel.png?raw=true "Space Time Travel")
 
 > *SPACETIME TRAVEL* is an imperative language that deals with problems through a step-by-step process that is completed through time and space (memory). The developers got inspired by the parallelization of the concepts of a programming language and time wherein problems are solved in the present—the gap between the past and the future.
 
