@@ -1,0 +1,32 @@
+
+%% --
+    An example program with SpaceTime Travel.
+    Outputs all leap years between two given inputs.
+-- %%
+
+%% -- main sequence -- %%
+ALPHA :time:
+    %% -- declare variables -- %%
+    numeral :start: <1600>
+    numeral :end:   <2100>
+
+    %% -- loop through each number between start and end -- %%
+    start loop (since :year: <- :start: until :year: ?= :end: do tick(:year:))
+        %% --
+            crude checking of leap year (divisibility by 4),
+            must check if the year is centurial and is divisible by 400
+        -- %%
+        start check (:year: % 4 ?= 0)
+            %% it's a leap year, print :year: %%
+            %% --
+                !!!!!!!!!! -------\/\/\/-----------------------------
+                !!!!!!!!!! -------\/\/\/-----------------------------
+                !!!!!!!!!! HOW DO U PRINT THO -----------------------
+                !!!!!!!!!! -------||||||-----------------------------
+                !!!!!!!!!! AND TAKE INPUTS ?? -----------------------
+                !!!!!!!!!! -------/\/\/\-----------------------------
+                !!!!!!!!!! -------/\/\/\-----------------------------
+            -- %%
+        end check
+    end loop
+OMEGA :time:
