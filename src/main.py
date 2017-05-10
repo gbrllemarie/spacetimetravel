@@ -78,4 +78,9 @@ while 1:
 	print token
 	if token[0] is None:
 		break
+	# TODO: this is where actions are defined for each token
+	# this should contain each definition in the lexicon above,
+	# specifying how it should convert itself to C code
+	# (or convert the output into something that could be easily
+	# converted into C).
 
