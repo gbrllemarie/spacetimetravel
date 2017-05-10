@@ -1,5 +1,26 @@
 
+import sys, os
 from plex import *
+
+# -- File Input Validation
+# validate argument count
+if len(sys.argv) != 2:
+	print("Invalid number of arguments.")
+	exit()
+
+# validate input file existence
+if not os.path.isfile(sys.argv[1]):
+	print("Unable to open input file.")
+	sys.exit()
+
+# read input source file
+source_name = sys.argv[1]
+source = open(source_name, "r")
+
+# generate output file name
+source_output = os.path.splitext(source_name)[0] + ".c"
+
+# -- Lexical Analysis
 
 # generate the lexicon
 lexicon = Lexicon([
@@ -40,4 +61,16 @@ lexicon = Lexicon([
 	#-# other stuff #-----------# actions #---------#
 	# ...
 
+	( AnyChar,                  IGNORE              ), # ignore everything else
 ])
+
+# generate the scanner
+scanner = Scanner(lexicon, source, source_output)
+
+# read through the source input until EOF
+while 1:
+	token = scanner.read()
+	print token
+	if token[0] is None:
+		break
+
