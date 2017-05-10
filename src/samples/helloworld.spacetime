@@ -9,6 +9,7 @@ ALPHA :time:
     %% -- declare variables -- %%
     numeral :start: <1600>
     numeral :end:   <2100>
+    %% TODO: i/o
 
     %% -- loop through each number between start and end -- %%
     start loop (since :year: <- :start: until :year: ?= :end: do tick(:year:))
@@ -18,15 +19,7 @@ ALPHA :time:
         -- %%
         start check (:year: % 4 ?= 0)
             %% it's a leap year, print :year: %%
-            %% --
-                !!!!!!!!!! -------\/\/\/-----------------------------
-                !!!!!!!!!! -------\/\/\/-----------------------------
-                !!!!!!!!!! HOW DO U PRINT THO -----------------------
-                !!!!!!!!!! -------||||||-----------------------------
-                !!!!!!!!!! AND TAKE INPUTS ?? -----------------------
-                !!!!!!!!!! -------/\/\/\-----------------------------
-                !!!!!!!!!! -------/\/\/\-----------------------------
-            -- %%
+            print(:year:) %% TODO: i/o syntax
         end check
     end loop
 OMEGA :time:
