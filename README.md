@@ -11,9 +11,15 @@
 
 ### Compilation
 
+`main.py` does the actual converting of `.spacetime` code into `.c`.
+
+`spacetime.py` is just a helper that executes whatever appropriate C compiler command needs to be executed.
+
 ### Debugging
 
 ## Development
+
+> Note: Things that need to be done are commented as `TODOs`.
 
 ### Requirements
 
@@ -23,5 +29,15 @@
 
 ### Setup
 
-1. navigate to the source directory `cd ./src/`
-2. install dependencies `pip install requirements.txt`
+1. navigate to the source directory
+
+`cd ./src/`
+
+2. install dependencies
+
+`pip install requirements.txt`
+
+3. try converting the included sample file to C (doesn't work yet of course)
+
+`python main.py samples/leapyears.spacetime`
+

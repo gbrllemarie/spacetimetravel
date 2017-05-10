@@ -2,7 +2,7 @@
 import sys, os
 from plex import *
 
-# -- File Input Validation
+# -- File Input Validation ----------------------------------------------------#
 # validate argument count
 if len(sys.argv) != 2:
 	print("Invalid number of arguments.")
@@ -20,7 +20,7 @@ source = open(source_name, "r")
 # generate output file name
 source_output = os.path.splitext(source_name)[0] + ".c"
 
-# -- Lexical Analysis
+# -- Lexical Analysis ---------------------------------------------------------#
 
 # generate the lexicon
 lexicon = Lexicon([
@@ -56,13 +56,18 @@ lexicon = Lexicon([
 	( Str("magbbreakdinkayo"),  "block_continue"    ), # continue
 
 	#-# names/identifiers #-----# actions #---------#
-	# ...
+	  # TODO: Create lex entries for other syntax stuffs.
+	  #       Consult the reference:
+	  #       http://www.cosc.canterbury.ac.nz/greg.ewing/python/Plex/1.1.1/doc/Reference.html#AnyChar
 
 	#-# other stuff #-----------# actions #---------#
-	# ...
+	  # ...
 
-	( AnyChar,                  IGNORE              ), # ignore everything else
+	  # ignore all other unrecognized characters
+	( AnyChar,                  IGNORE              ),
 ])
+
+# -- Token Processing ---------------------------------------------------------#
 
 # generate the scanner
 scanner = Scanner(lexicon, source, source_output)
