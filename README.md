@@ -35,7 +35,7 @@
 
 2. install dependencies
 
-`pip install requirements.txt`
+`pip install -r requirements.txt`
 
 3. try converting the included sample file to C (doesn't work yet of course)
 
