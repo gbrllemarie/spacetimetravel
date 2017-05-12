@@ -58,10 +58,11 @@ lexicon = Lexicon([
     #-# names/identifiers #-----# actions #---------#
       # TODO: Create lex entries for other syntax stuffs.
       #       Consult the reference:
-      #       http://www.cosc.canterbury.ac.nz/greg.ewing/python/Plex/1.1.1/doc/Reference.html#AnyChar
+      #       http://www.cosc.canterbury.ac.nz/greg.ewing/python/Plex/1.1.1/doc/Reference.html
 
     #-# other stuff #-----------# actions #---------#
-      # ...
+    ( Str(" "),                 "formatting_space"  ), # copy over spaces
+    ( Str("\t"),                "formatting_tab"    ), # copy over tabs
 
       # ignore all other unrecognized characters
     ( AnyChar,                  IGNORE              ),
@@ -75,7 +76,6 @@ scanner = Scanner(lexicon, source, source_output)
 # read through the source input until EOF
 while 1:
     token = scanner.read()
-    print token
     if token[0] is None:
         break
     # TODO: this is where actions are defined for each token
@@ -83,4 +83,74 @@ while 1:
     # specifying how it should convert itself to C code
     # (or convert the output into something that could be easily
     # converted into C).
+
+    # -- data types
+    elif token[0] == "datatype_int":
+        print "int"
+    elif token[0] == "datatype_float":
+        print "float"
+    elif token[0] == "datatype_char":
+        print "char"
+    elif token[0] == "datatype_string":
+        print "char*"
+    elif token[0] == "datatype_bool":
+        print "bool"
+
+    # -- constants   
+    elif token[0] == "constant_void":
+        print "void"
+    elif token[0] == "constant_true":
+        print "true"
+    elif token[0] == "constant_false":
+        print "false"
+
+    # -- syntax
+    elif token[0] == "syntax_for":
+        print "for"
+    elif token[0] == "syntax_while":
+        print "while"
+    elif token[0] == "syntax_if":
+        print "if"
+    elif token[0] == "syntax_elseif":
+        print "else if"
+    elif token[0] == "syntax_else":
+        print "else"
+
+    # -- helpers
+    elif token[0] == "helper_increment":
+        print "++"
+    elif token[0] == "helper_decrement":
+        print "--"
+    elif token[0] == "helper_typecast":
+        print "(typecast here)"                        # TODO
+
+    # -- blocks
+    elif token[0] == "block_mainfnstart":
+        print "int main() {\n"
+    elif token[0] == "block_mainfnend":
+        print "}\n"
+    elif token[0] == "block_fnstart":
+        print "fxn_name() {\n"
+    elif token[0] == "block_fnend":
+        print "}\n"
+    elif token[0] == "block_start":
+        print "{\n"
+    elif token[0] == "block_end":
+        print "}\n"
+    elif token[0] == "block_break":
+        print "break"
+    elif token[0] == "block_continue":
+        print "continue"
+
+    # -- others
+    elif token[0] == "formatting_space":
+        print " ",
+    elif token[0] == "formatting_tab":
+        print "\t",
+
+    # Insert more todos here
+
+
+    else:
+        print token
 
