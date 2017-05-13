@@ -1,6 +1,7 @@
 
 import sys, os
 from plex import *
+from StringIO import *
 
 # -- File Input Validation ----------------------------------------------------#
 # validate argument count
@@ -26,12 +27,6 @@ source_output = os.path.splitext(source_name)[0] + ".c"
 # reserved words
 lex_reserved = [
     #-# pattern #---------------# actions #---------#
-      # data types
-    ( Str("numeral"),           "datatype_int"      ), # int datatype
-    ( Str("decimal"),           "datatype_float"    ), # float datatype
-    ( Str("star"),              "datatype_char"     ), # char datatype
-    ( Str("constellation"),     "datatype_string"   ), # string (char*) datatype
-    ( Str("day"),               "datatype_bool"     ), # bool datatype
       # constants
     ( Str("vacuum"),            "constant_void"     ), # void
     ( Str("light"),             "constant_true"     ), # true
@@ -49,12 +44,21 @@ lex_reserved = [
       # blocks
     ( Str("ALPHA"),             "block_mainfnstart" ), # function start
     ( Str("OMEGA"),             "block_mainfnend"   ), # function end
-    ( Str("activate"),          "block_fnstart"     ), # function start
-    ( Str("deactivate"),        "block_fnend"       ), # function end
+    # ( Str("activate"),          "block_fnstart"     ), # function start
+    # ( Str("deactivate"),        "block_fnend"       ), # function end
     ( Str("start"),             "block_start"       ), # block start
     ( Str("end"),               "block_end"         ), # block end
     ( Str("walangforever"),     "block_break"       ), # break
     ( Str("magbbreakdinkayo"),  "block_continue"    ), # continue
+]
+
+lex_datatypes = [
+    # data types
+    ( Str("numeral"),           "datatype_int"      ), # int datatype
+    ( Str("decimal"),           "datatype_float"    ), # float datatype
+    ( Str("star"),              "datatype_char"     ), # char datatype
+    ( Str("constellation"),     "datatype_string"   ), # string (char*) datatype
+    ( Str("day"),               "datatype_bool"     ) # bool datatype
 ]
 
 
@@ -62,6 +66,16 @@ comments_token = Str("%%") + Rep(AnyBut("%%")) + Str("%%")
 lex_comments = [
     ( comments_token,           "syntax_comment"    ), # add comments to lexicon
 ]
+
+vardec_token = Str("numeral", "decimal", "star", "day", "constellation") + Rep(AnyBut("%%")) + Str(":")+ Eol
+lex_vardec = [
+    ( vardec_token,           "syntax_vardec"    ), # add comments to lexicon
+]
+
+# fns_token = Str("activate") + Rep(AnyBut("%%")) + Str("deactivate")
+# lex_comments = [
+#     ( fns_token,           "block_fnstart"    ), # add comments to lexicon
+# ]
 
 # TODO: Create lex entries for other syntax stuffs.
 #       Consult the reference:
@@ -81,8 +95,10 @@ lex_misc = [
 
 lex_tokens =  lex_reserved
 lex_tokens += lex_comments
+lex_tokens += lex_vardec
 lex_tokens += lex_formatting
 lex_tokens += lex_misc
+
 
 # -- generate the lexicon ---------------------------------#
 lexicon = Lexicon(lex_tokens)
@@ -92,8 +108,30 @@ lexicon = Lexicon(lex_tokens)
 # generate the scanner
 scanner = Scanner(lexicon, source, source_output)
 
+def parseFns(token):
+    fxn_name = token[1].split(' ')[1][1:-1]
+    print token[1].split(' ')
+    print token[1].split(' ')[1][1:-1]+"()"
+
+
+def parseVardec(token):
+    varname= token.split(':')[1]
+    scan1 = Scanner(Lexicon(lex_datatypes), StringIO(token), source_output)
+    tok = scan1.read()
+    if tok[0] == "datatype_int":
+        print "int "+str(varname)+";"
+    elif tok[0] == "datatype_float":
+        print "float "+str(varname)+";"
+    elif tok[0] == "datatype_char":
+        print "char "+str(varname)+";"
+    elif tok[0] == "datatype_string":
+        print "char* "+str(varname)+";"
+    elif tok[0] == "datatype_bool":
+        print "bool "+str(varname)+";"
+
 # read through the source input until EOF
 while 1:
+    fileout = open('test.txt', 'w')
     token = scanner.read()
     if token[0] is None:
         break
@@ -106,22 +144,30 @@ while 1:
     # -- data types
     elif token[0] == "datatype_int":
         print "int"
+        fileout.write("int")
     elif token[0] == "datatype_float":
         print "float"
+        fileout.write("float")
     elif token[0] == "datatype_char":
         print "char"
+        fileout.write("char")
     elif token[0] == "datatype_string":
         print "char*"
+        fileout.write("char *")
     elif token[0] == "datatype_bool":
         print "bool"
+        fileout.write("bool")
 
     # -- constants   
     elif token[0] == "constant_void":
         print "void"
+        fileout.write("void")
     elif token[0] == "constant_true":
         print "true"
+        fileout.write("true")
     elif token[0] == "constant_false":
         print "false"
+        fileout.write("false")
 
     # -- syntax
     elif token[0] == "syntax_for":
@@ -136,6 +182,9 @@ while 1:
         print "else"
     elif token[0] == "syntax_comment":
         print "/*" + token[1][2:-2] + "*/"
+        print token
+    elif token[0] == 'syntax_vardec':
+        parseVardec(token[1])
 
     # -- helpers
     elif token[0] == "helper_increment":
@@ -148,20 +197,29 @@ while 1:
     # -- blocks
     elif token[0] == "block_mainfnstart":
         print "int main() {\n"
+        fileout.write("int main() {\n")
     elif token[0] == "block_mainfnend":
-        print "}\n"
+        print "return 0;\n}\n"
+        fileout.write("return 0;\n}\n")
     elif token[0] == "block_fnstart":
         print "fxn_name() {\n"
+        # parseFns(token)
+
     elif token[0] == "block_fnend":
         print "}\n"
+        fileout.write("}\n")
     elif token[0] == "block_start":
         print "{\n"
+        fileout.write("{\n")
     elif token[0] == "block_end":
         print "}\n"
+        fileout.write("}\n")
     elif token[0] == "block_break":
-        print "break"
+        print "break;"
+        fileout.write("break;\n")
     elif token[0] == "block_continue":
-        print "continue"
+        print "continue;"
+        fileout.write("continue;\n")
 
     # -- others
     elif token[0] == "formatting_space":
@@ -169,9 +227,13 @@ while 1:
     elif token[0] == "formatting_tab":
         print "\t",
 
+
     # Insert more todos here
-
-
     else:
         print token
 
+    # print "--tok"
+    print token[0]
+    # print "--\n"
+
+fileout.close()
