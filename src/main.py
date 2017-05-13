@@ -22,9 +22,10 @@ source_output = os.path.splitext(source_name)[0] + ".c"
 
 # -- Lexical Analysis ---------------------------------------------------------#
 
-# generate the lexicon
-lexicon = Lexicon([
-    #-# reserved words #--------# actions #---------#
+# -- generate arrays for lexicon --------------------------#
+# reserved words
+lex_reserved = [
+    #-# pattern #---------------# actions #---------#
       # data types
     ( Str("numeral"),           "datatype_int"      ), # int datatype
     ( Str("decimal"),           "datatype_float"    ), # float datatype
@@ -54,19 +55,37 @@ lexicon = Lexicon([
     ( Str("end"),               "block_end"         ), # block end
     ( Str("walangforever"),     "block_break"       ), # break
     ( Str("magbbreakdinkayo"),  "block_continue"    ), # continue
+]
 
-    #-# names/identifiers #-----# actions #---------#
-      # TODO: Create lex entries for other syntax stuffs.
-      #       Consult the reference:
-      #       http://www.cosc.canterbury.ac.nz/greg.ewing/python/Plex/1.1.1/doc/Reference.html
 
-    #-# other stuff #-----------# actions #---------#
+comments_token = Str("%%") + Rep(AnyBut("%%")) + Str("%%")
+lex_comments = [
+    ( comments_token,           "syntax_comment"    ), # add comments to lexicon
+]
+
+# TODO: Create lex entries for other syntax stuffs.
+#       Consult the reference:
+#       http://www.cosc.canterbury.ac.nz/greg.ewing/python/Plex/1.1.1/doc/Reference.html
+
+# whitespaces and other formatting bits
+lex_formatting = [
     ( Str(" "),                 "formatting_space"  ), # copy over spaces
     ( Str("\t"),                "formatting_tab"    ), # copy over tabs
+]
 
+# other stuff
+lex_misc = [
       # ignore all other unrecognized characters
     ( AnyChar,                  IGNORE              ),
-])
+]
+
+lex_tokens =  lex_reserved
+lex_tokens += lex_comments
+lex_tokens += lex_formatting
+lex_tokens += lex_misc
+
+# -- generate the lexicon ---------------------------------#
+lexicon = Lexicon(lex_tokens)
 
 # -- Token Processing ---------------------------------------------------------#
 
@@ -115,6 +134,8 @@ while 1:
         print "else if"
     elif token[0] == "syntax_else":
         print "else"
+    elif token[0] == "syntax_comment":
+        print "/*" + token[1][2:-2] + "*/"
 
     # -- helpers
     elif token[0] == "helper_increment":
