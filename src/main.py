@@ -194,29 +194,29 @@ while 1:
     # -- blocks
     elif token[0] == "block_mainfnstart":
         print "int main() {\n"
-        fileout.write("int main() {\n")
+        #fileout.write("int main() {\n")
     elif token[0] == "block_mainfnend":
         print "return 0;\n}\n"
-        fileout.write("return 0;\n}\n")
+        #fileout.write("return 0;\n}\n")
     elif token[0] == "block_fnstart":
         print "fxn_name() {\n"
         # parseFns(token)
 
     elif token[0] == "block_fnend":
         print "}\n"
-        fileout.write("}\n")
+        #fileout.write("}\n")
     elif token[0] == "block_start":
         print "{\n"
-        fileout.write("{\n")
+        #fileout.write("{\n")
     elif token[0] == "block_end":
         print "}\n"
-        fileout.write("}\n")
+        #fileout.write("}\n")
     elif token[0] == "block_break":
         print "break;"
-        fileout.write("break;\n")
+        #fileout.write("break;\n")
     elif token[0] == "block_continue":
         print "continue;"
-        fileout.write("continue;\n")
+        #fileout.write("continue;\n")
 
     # -- others
     elif token[0] == "formatting_space":
