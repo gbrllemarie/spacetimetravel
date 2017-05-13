@@ -1,7 +1,7 @@
 
-import sys, os
+import sys, os, re
 from plex import *
-from plex.traditional import re
+from plex.traditional import re as rex
 from StringIO import *
 
 # -- File Input Validation ----------------------------------------------------#
@@ -23,6 +23,13 @@ source = open(source_name, "r")
 source_output = os.path.splitext(source_name)[0] + ".c"
 
 # -- Lexical Analysis ---------------------------------------------------------#
+
+# general matching for tokens
+ident_strip = Range("AZaz") + Rep(Range("AZaz09"))
+identifier = Str(":") + ident_strip + Str(":")
+integer = Rep1(Range("09")) 
+number = integer + (Str(".")+Rep1(Range("09"))|Empty)
+wspace = Rep(Str(" ")|Str("\t"))
 
 # -- generate arrays for lexicon --------------------------#
 # reserved words
@@ -50,7 +57,8 @@ lex_reserved = [
     ( Str("start"),             "block_start"       ), # block start
     ( Str("end"),               "block_end"         ), # block end
     ( Str("walangforever"),     "block_break"       ), # break
-    ( Str("magbbreakdinkayo"),  "block_continue"    ), # continue
+    ( Str("magbbreakdinkayo"),  "block_continue"    ) # continue
+    #( Str("warp"),               Begin('helper_subprogram')   ), # sub program call
 ]
 
 lex_datatypes = [
@@ -62,15 +70,29 @@ lex_datatypes = [
     ( Str("day"),               "datatype_bool"     ) # bool datatype
 ]
 
+lex_expr = [
+    (Str("(")+Rep(AnyBut(""))+Str(")")+wspace,              "expr_paren"    ), # parenthesis
+    # (Alt(identifier|number)+Rep(wspace+Any("+-")+wspace+Alt(identifier|number)),         "expr_addsub"    ), # addition and subtraction
+    # (Alt(identifier|number)+Rep(wspace+Any("*/")+wspace+Alt(identifier|number)),         "expr_muldiv"    ), # multiplication and division
+    (Alt(identifier|number)+Rep(wspace+Any("+-*/")+wspace+Alt(identifier|number)),         "expr_op"    ) # multiplication and division
+]
+
+fncall_token = Str("warp(") + identifier + Str(")(") + Rep(
+    Opt(Alt(number,identifier)+Rep(Str(",")+Rep(wspace+(number|identifier)+wspace))
+    ) +Str(")"))+Eol
+lex_fncall = [
+    ( fncall_token,           "helper_subprogram"    ), # add functional call to lexicon
+]
+
 
 comments_token = Str("%%") + Rep(AnyBut("%%")) + Str("%%")
 lex_comments = [
     ( comments_token,           "syntax_comment"    ), # add comments to lexicon
 ]
 
-vardec_token = Str("numeral", "decimal", "star", "day", "constellation") + Rep(AnyBut("\n")) + Str(":")+Eol
+vardec_token = Str("numeral", "decimal", "star", "day", "constellation") +wspace+ Str(":")+ ident_strip + Str(":")+Eol
 lex_vardec = [
-    ( vardec_token,           "syntax_vardec"    ), # add comments to lexicon
+    ( vardec_token,           "syntax_vardec"    ), # add variable declaration to lexicon
 ]
 
 # fns_token = Str("activate") + Rep(AnyBut("%%")) + Str("deactivate")
@@ -85,20 +107,29 @@ lex_vardec = [
 # whitespaces and other formatting bits
 lex_formatting = [
     ( Str(" "),                 "formatting_space"  ), # copy over spaces
+    ( Str("\n"),                 "formatting_newline"  ), # copy over spaces
     ( Str("\t"),                "formatting_tab"    ), # copy over tabs
 ]
 
 # other stuff
 lex_misc = [
       # ignore all other unrecognized characters
-    ( AnyChar,                  IGNORE              ),
+    ( AnyChar, IGNORE),
+]
+
+lex_error = [
+     ( AnyBut('\n'), "syn_error" ),
 ]
 
 lex_tokens =  lex_reserved
+lex_tokens += lex_expr
 lex_tokens += lex_comments
 lex_tokens += lex_vardec
 lex_tokens += lex_formatting
-lex_tokens += lex_misc
+# lex_tokens += lex_misc
+lex_tokens += lex_fncall
+lex_tokens += lex_error
+
 
 
 # -- generate the lexicon ---------------------------------#
@@ -131,9 +162,34 @@ def parseVardec(token):
         print "bool "+str(varname)+";"
     return
 
+def parseFncall(token):
+    tok = filter(None,re.split('\(|\)', str(token)))
+    args = ""
+    if(len(tok) > 2):
+        raw_args = tok[2].split(',')
+        for i in range(len(raw_args)):
+            if raw_args[i][0] == ':' and raw_args[i][-1] == ':':
+                raw_args[i] = raw_args[i][1:-1]
+        args = ",".join(raw_args)
+    print "/** function call to "+tok[1][1:-1]+" **/"
+    print tok[1][1:-1]+"("+args+");"
+    return
+
+# def parseExprOp(token, op):
+#     tok = filter(None,re.split(op, str(token)))
+#     if(len(tok) > 1):
+#         for i in range(len(tok)):
+#             print str(parseExprOp(tok[0],'\/'))+" * "
+#     else:
+#         return tok
+
 # read through the source input until EOF
+linenum = 0
 while 1:
+    linenum += 1
     token = scanner.read()
+    
+    # print token
     if token[0] is None:
         break
     # TODO: this is where actions are defined for each token
@@ -190,6 +246,8 @@ while 1:
         print "--"
     elif token[0] == "helper_typecast":
         print "(typecast here)"                        # TODO
+    elif token[0] == "helper_subprogram":
+        parseFncall(token[1])
 
     # -- blocks
     elif token[0] == "block_mainfnstart":
@@ -223,8 +281,20 @@ while 1:
         print " ",
     elif token[0] == "formatting_tab":
         print "\t",
-
+    elif token[0] == "formatting_newline":
+        linenum -= 1
+        pass
+    elif token[0] == "expr_paren":
+        print token
+    elif token[0] == "expr_addsub":
+        print token
+    elif token[0] == "expr_muldiv":
+        print token
+    # elif token[0] == "expr_op":
+    #     parseExprOp(token[1], '\*')
 
     # Insert more todos here
     else:
         print token
+        print "syntax error on line "+str(linenum)
+        break
