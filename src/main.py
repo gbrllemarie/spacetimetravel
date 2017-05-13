@@ -1,6 +1,7 @@
 
 import sys, os
 from plex import *
+from plex.traditional import re
 from StringIO import *
 
 # -- File Input Validation ----------------------------------------------------#
@@ -67,7 +68,7 @@ lex_comments = [
     ( comments_token,           "syntax_comment"    ), # add comments to lexicon
 ]
 
-vardec_token = Str("numeral", "decimal", "star", "day", "constellation") + Rep(AnyBut("%%")) + Str(":")+ Eol
+vardec_token = Str("numeral", "decimal", "star", "day", "constellation") + Rep(AnyBut("\n")) + Str(":")+Eol
 lex_vardec = [
     ( vardec_token,           "syntax_vardec"    ), # add comments to lexicon
 ]
@@ -128,10 +129,10 @@ def parseVardec(token):
         print "char* "+str(varname)+";"
     elif tok[0] == "datatype_bool":
         print "bool "+str(varname)+";"
+    return
 
 # read through the source input until EOF
 while 1:
-    fileout = open('test.txt', 'w')
     token = scanner.read()
     if token[0] is None:
         break
@@ -144,30 +145,26 @@ while 1:
     # -- data types
     elif token[0] == "datatype_int":
         print "int"
-        fileout.write("int")
     elif token[0] == "datatype_float":
         print "float"
-        fileout.write("float")
     elif token[0] == "datatype_char":
         print "char"
-        fileout.write("char")
     elif token[0] == "datatype_string":
         print "char*"
-        fileout.write("char *")
     elif token[0] == "datatype_bool":
         print "bool"
-        fileout.write("bool")
+        
 
     # -- constants   
     elif token[0] == "constant_void":
         print "void"
-        fileout.write("void")
+        
     elif token[0] == "constant_true":
         print "true"
-        fileout.write("true")
+        
     elif token[0] == "constant_false":
         print "false"
-        fileout.write("false")
+        
 
     # -- syntax
     elif token[0] == "syntax_for":
@@ -231,9 +228,3 @@ while 1:
     # Insert more todos here
     else:
         print token
-
-    # print "--tok"
-    print token[0]
-    # print "--\n"
-
-fileout.close()
