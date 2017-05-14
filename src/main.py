@@ -231,6 +231,7 @@ def parseExprOp(token, end=0):
 linenum = 1
 while 1:
     token = scanner.read()
+    # print token
     linenum += token[1].count("\n")
     # print linenum
 

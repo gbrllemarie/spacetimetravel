@@ -20,7 +20,7 @@ ALPHA :time:
             must check if the year is centurial and is divisible by 400
         -- %%
         start check (:year: % 4 ?= 0)
-            %% it's a leap year, print :year: 
+            %% it's a leap year, print :year: %%
             print(:year:) %% TODO: i/o syntax %%
         end check
     end loop
