@@ -1,0 +1,19 @@
+
+%% --
+    An example program with SpaceTime Travel.
+    Simple addition using functions
+-- %%
+
+activate :present: (with numeral :x:) returns numeral
+    :x: = :x: + 2
+    transmit :x:
+deactivate :present:
+
+
+ALPHA :time:
+    %% -- declare variables -- %%
+    numeral :start: 
+    :start: <- 2
+    numeral :answer: 
+    :answer: <- warp (:present:) (:start:)
+OMEGA :time:
