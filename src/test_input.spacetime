@@ -2,10 +2,15 @@ ALPHA :time:
 	numeral :x:
 	decimal :y:
 	star :c:
-	constellation :str:
+	constellation :str:<15>
 
 	receive :x:
 	receive :y:
 	receive :c:
 	receive :str:
+
+	display :x:
+	display :y:
+	display :c:
+	display :str:
 OMEGA :time:

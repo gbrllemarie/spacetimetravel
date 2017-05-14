@@ -1,0 +1,4 @@
+ALPHA :time:
+	constellation :str:<15>
+	receive :str:
+OMEGA :time:
