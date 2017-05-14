@@ -21,7 +21,7 @@ ALPHA :time:
         -- %%
         start check (:year: % 4 ?= 0)
             %% it's a leap year, print :year: %%
-            print(:year:) %% TODO: i/o syntax
+            print(:year:) %% TODO: i/o syntax %%
         end check
     end loop
 OMEGA :time:
