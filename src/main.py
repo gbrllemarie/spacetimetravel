@@ -63,6 +63,11 @@ lex_reserved = [
     #( Str("warp"),               Begin('helper_subprogram')   ), # sub program call
 ]
 
+# global dictionary that stores variables and their types
+# keys are the variables and values are their types
+# { "x": "int", "str": "char *" }
+variable_types_dict = {}
+
 # datatypes and parsing
 lex_datatypes = [
     # data types
@@ -170,23 +175,36 @@ def parseFns(token):
 
 def parseVardec(token):
     varname = token.split(':')[1]
-    varname= token.split(":")[1]
     scan1 = Scanner(Lexicon(lex_datatypes), StringIO(token), source_output)
     tok = scan1.read()
     if tok[0] == "datatype_int":
         print "int "+str(varname)+";",
+        setDictVarAndType(varname, "int")
     elif tok[0] == "datatype_float":
         print "float "+str(varname)+";",
+        setDictVarAndType(varname, "float")
     elif tok[0] == "datatype_char":
         print "char "+str(varname)+";",
+        setDictVarAndType(varname, "char")
     elif tok[0] == "datatype_string":
         print "char* "+str(varname)+";",
+        setDictVarAndType(varname, "char*")
     elif tok[0] == "datatype_bool":
         print "bool "+str(varname)+";",
+        setDictVarAndType(varname, "bool")
     return
 
-def parseInput(token):
-    print token
+def setDictVarAndType(var, type):
+    variable_types_dict[var] = type
+
+def typeof(variable):
+    variable_type = variable_types_dict[variable]
+    return variable_type
+
+def parseScanInput(token):
+    varname = token.split(':')[1].strip()
+    print "varname: ", varname
+    print "typeof(varname): ", typeof(varname)
     # return
 
 def parseFncall(token):
@@ -261,7 +279,7 @@ while 1:
     elif token[0] == "syntax_vardec":
         parseVardec(token[1])
     elif token[0] == 'syntax_scanf': 
-        parseInput(token[1])
+        parseScanInput(token[1])
     elif token[0] == 'syntax_varassign':
         tok = token[1].replace(":","")
         tok = tok.replace("<-"," = ")
