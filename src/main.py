@@ -79,7 +79,7 @@ lex_datatypes = [
 ]
 
 vardec_token = ( Str("numeral", "decimal", "star", "day", "constellation")
-               + wspace + Str(":") + ident_strip + Str(":") + Eol )
+               + wspace + Str(":") + ident_strip + Str(":") +Opt(Str("<")+integer+Str(">"))+ Eol )
 lex_vars = [
     ( vardec_token,             "syntax_vardec"     ), # variable declaration
     ( identifier + Str("<-"),   "syntax_varassign"  ), # variable assignment
@@ -201,20 +201,25 @@ def parseVardec(token):
     scan1 = Scanner(Lexicon(lex_datatypes), StringIO(token), source_output)
     tok = scan1.read()
     if tok[0] == "datatype_int":
-        print "int "+str(varname)+";",
+        print "int "+str(varname),
         setDictVarAndType(varname, "int")
     elif tok[0] == "datatype_float":
-        print "float "+str(varname)+";",
+        print "float "+str(varname),
         setDictVarAndType(varname, "float")
     elif tok[0] == "datatype_char":
-        print "char "+str(varname)+";",
+        print "char "+str(varname),
         setDictVarAndType(varname, "char")
     elif tok[0] == "datatype_string":
-        print "char* "+str(varname)+";",
+        print "char  "+str(varname),
         setDictVarAndType(varname, "char*")
     elif tok[0] == "datatype_bool":
-        print "bool "+str(varname)+";",
+        print "bool "+str(varname),
         setDictVarAndType(varname, "bool")
+
+    temp = filter(None,token.split(':'))
+    if(len(temp) > 2):
+        print "["+temp[2][1:-1]+"]",
+    print ";",
     return
 
 def setDictVarAndType(var, type):
@@ -267,7 +272,14 @@ def parseExprOp(token, end=0):
     if end == 0:
         token = token+";"
     
-    print token
+    return token
+
+def parseExprParen(token):
+    strip_token = token[1:-1] #remove enclosing parentheses
+    scan1 = Scanner(Lexicon(lex_expr), StringIO(strip_token), source_output)
+    tok = scan1.read()
+    #if tok[0] == ""
+
 
 # read through the source input until EOF
 linenum = 1
@@ -322,9 +334,6 @@ while 1:
         parseVardec(token[1])
     elif token[0] == 'syntax_scanf': 
         print parseScanInput(token[1])
-    elif token[0] == 'syntax_varassign':
-        tok = token[1].replace(":","")
-        tok = tok.replace("<-"," = ")
     elif token[0] == "syntax_varassign":
         tok = token[1].replace(":", "")
         tok = tok.replace("<-", "=")
