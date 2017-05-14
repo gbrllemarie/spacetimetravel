@@ -1,0 +1,20 @@
+
+%% --
+    An example program with SpaceTime Travel.
+    Outputs all leap years between two given inputs.
+-- %%
+
+%% -- main sequence -- %%
+ALPHA :time:
+    %% -- declare variables -- %%
+    numeral :start:
+    :start: <- 1600
+    numeral :end:
+    :end: <- 2100
+    %% TODO: i/o %%
+
+    start check (:year: % 4 ?= 0)
+        %% it's a leap year, print :year: %%
+        print(:year:) %% TODO: i/o syntax %%
+    end check
+OMEGA :time:

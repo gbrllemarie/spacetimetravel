@@ -33,6 +33,26 @@ number      = integer + (Str(".") + Rep1(Range("09")) | Empty)
 
 
 # -- generate arrays for lexicon --------------------------#
+# action procedures
+def begin_body(scanner, text):
+    scanner.begin("body")
+    return "block_begin_body"
+
+def begin_check(scanner, text):
+    scanner.begin("condition")
+    return "block_begin_check"
+
+def begin_cycle(scanner, text):
+    scanner.begin("condition")
+    return "block_begin_cycle"
+
+def block_end(scanner, text):
+    scanner.begin("")
+    return "block_end"
+
+def recursive_tokenize(scanner, text):
+    tokenize()
+
 # reserved words
 lex_expr_paren_newline = Str("(")+Rep(AnyBut("\n"))+Str(")")+wspace
 lex_reserved = [
@@ -43,8 +63,8 @@ lex_reserved = [
     ( Str("darkness"),          "constant_false"    ), # false
       # syntax
     ( Str("loop"),              "syntax_for"        ), # for loop
-    ( Str("cycle"),             "syntax_while"      ), # while loop
-    ( Str("check"),             "syntax_if"         ), # if
+    #( Str("cycle"),             "syntax_while"      ), # while loop
+    #( Str("check"),             "syntax_if"         ), # if
     ( Str("recheck"),           "syntax_elseif"     ), # else if
     ( Str("retreat"),           "syntax_else"       ), # else
     ( Str("receive") + identifier,           "syntax_scanf"       ), # scanf
@@ -58,11 +78,26 @@ lex_reserved = [
     # ( Str("OMEGA"),             "block_mainfnend"   ), # function end
     # ( Str("activate"),          "block_fnstart"     ), # function start
     # ( Str("deactivate"),        "block_fnend"       ), # function end
-    ( Str("start"),             "block_start"       ), # block start
-    ( Str("end"),               "block_end"         ), # block end
+    #( Str("start"),             "block_start"       ), # block start
+    #( Str("end"),               "block_end"         ), # block end
     ( Str("walangforever"),     "block_break"       ), # break
     ( Str("magbbreakdinkayo"),  "block_continue"    ) # continue
     #( Str("warp"),               Begin('helper_subprogram')   ), # sub program call
+]
+
+lex_blocks = [
+    ( Str("start check") + wspace + Str("("),   begin_check),
+    #( Str("start loop"),    begin_loop),
+    ( Str("start cycle") + wspace + Str("("),   begin_cycle),
+    State("condition", [
+        (Str(")"), begin_body),
+        (AnyChar, recursive_tokenize)
+    ]),
+    State("body", [
+        (Str("end check"), block_end),
+        (Str("end cycle"), block_end),
+        (AnyChar, recursive_tokenize)
+    ])
 ]
 
 # global dictionary that stores variables and their types
@@ -185,6 +220,7 @@ lex_tokens += lex_formatting
 # lex_tokens += lex_misc
 lex_tokens += lex_fncall
 lex_tokens += lex_error
+lex_tokens += lex_blocks
 
 lexicon = Lexicon(lex_tokens)
 
@@ -308,131 +344,145 @@ def parseExprParen(token):
     tok = scan1.read()
     #if tok[0] == ""
 
-
-# read through the source input until EOF
 linenum = 1
-while 1:
-    token = scanner.read()
-    # print token
-    linenum += token[1].count("\n")
-    # print linenum
+def tokenize():
+    global linenum
+    # read through the source input until EOF
+    while 1:
+        token = scanner.read()
+        # print token
+        linenum += token[1].count("\n")
+        # print linenum
 
-    if token[0] is None:
-        break
-    # TODO: this is where actions are defined for each token
-    # this should contain each definition in the lexicon above,
-    # specifying how it should convert itself to C code
-    # (or convert the output into something that could be easily
-    # converted into C).
+        if token[0] is None:
+            break
+        # TODO: this is where actions are defined for each token
+        # this should contain each definition in the lexicon above,
+        # specifying how it should convert itself to C code
+        # (or convert the output into something that could be easily
+        # converted into C).
 
-    # -- data types
-    elif token[0] == "datatype_int":
-        print "int",
-    elif token[0] == "datatype_float":
-        print "float",
-    elif token[0] == "datatype_char":
-        print "char",
-    elif token[0] == "datatype_string":
-        print "char*",
-    elif token[0] == "datatype_bool":
-        print "bool",
+        # -- data types
+        elif token[0] == "datatype_int":
+            print "int",
+        elif token[0] == "datatype_float":
+            print "float",
+        elif token[0] == "datatype_char":
+            print "char",
+        elif token[0] == "datatype_string":
+            print "char*",
+        elif token[0] == "datatype_bool":
+            print "bool",
 
-    # -- constants   
-    elif token[0] == "constant_void":
-        print "void",
-    elif token[0] == "constant_true":
-        print "true",
-    elif token[0] == "constant_false":
-        print "false",
+        # -- constants   
+        elif token[0] == "constant_void":
+            print "void",
+        elif token[0] == "constant_true":
+            print "true",
+        elif token[0] == "constant_false":
+            print "false",
 
-    # -- syntax
-    elif token[0] == "syntax_for":
-        print "for",
-    elif token[0] == "syntax_while":
-        print "while",
-    elif token[0] == "syntax_if":
-        print "if",
-    elif token[0] == "syntax_elseif":
-        print "else if",
-    elif token[0] == "syntax_else":
-        print "else",
-    elif token[0] == "syntax_comment":
-        print "/*" + token[1][2:-2] + "*/",
-    elif token[0] == "syntax_vardec":
-        parseVardec(token[1])
-    elif token[0] == 'syntax_scanf': 
-        print parseScanInput(token[1])
-    elif token[0] == 'syntax_printf': 
-        print parsePrintInput(token[1])
-    elif token[0] == 'syntax_varassign':
-        tok = token[1].replace(":","")
-        tok = tok.replace("<-"," = ")
-    elif token[0] == "syntax_varassign":
-        tok = token[1].replace(":", "")
-        tok = tok.replace("<-", "=")
-        print tok,
+        # -- syntax
+        elif token[0] == "syntax_for":
+            print "for",
+        #elif token[0] == "syntax_while":
+        #    print "while",
+        #elif token[0] == "syntax_if":
+        #    print "if",
+        elif token[0] == "syntax_elseif":
+            print "else if",
+        elif token[0] == "syntax_else":
+            print "else",
+        elif token[0] == "syntax_comment":
+            print "/*" + token[1][2:-2] + "*/",
+        elif token[0] == "syntax_vardec":
+            parseVardec(token[1])
+        elif token[0] == 'syntax_scanf': 
+            print parseScanInput(token[1])
+        elif token[0] == 'syntax_printf': 
+            print parsePrintInput(token[1])
+        elif token[0] == 'syntax_varassign':
+            tok = token[1].replace(":","")
+            tok = tok.replace("<-"," = ")
+        elif token[0] == "syntax_varassign":
+            tok = token[1].replace(":", "")
+            tok = tok.replace("<-", "=")
+            print tok,
 
-    # -- helpers
-    elif token[0] == "helper_increment":
-        c_output = increment_or_decrement(token[1], "++")
-        print c_output
-    elif token[0] == "helper_decrement":
-        c_output = increment_or_decrement(token[1], "--")
-        print c_output
-    elif token[0] == "helper_typecast":
-        print "(typecast here)",                       # TODO
-    elif token[0] == "helper_subprogram":
-        parseFncall(token[1])
+        # -- helpers
+        elif token[0] == "helper_increment":
+            c_output = increment_or_decrement(token[1], "++")
+            print c_output
+        elif token[0] == "helper_decrement":
+            c_output = increment_or_decrement(token[1], "--")
+            print c_output
+        elif token[0] == "helper_typecast":
+            print "(typecast here)",                       # TODO
+        elif token[0] == "helper_subprogram":
+            parseFncall(token[1])
 
-    # -- blocks
-    elif token[0] == "block_main":
-        print "main",
+        # -- blocks
+        elif token[0] == "block_main":
+            print "main",
 
-    elif token[0] == "block_mainfnstart":
-        print "int main() {",
-        #fileout.write("int main() {\n")
-    elif token[0] == "block_mainfnend":
-        print "return 0;\n}",
-        #fileout.write("return 0;\n}\n")
-    elif token[0] == "block_fnstart":
-        print "fxn_name() {",
-        # parseFns(token)
+        elif token[0] == "block_mainfnstart":
+            print "int main() {",
+            #fileout.write("int main() {\n")
+        elif token[0] == "block_mainfnend":
+            print "return 0;\n}",
+            #fileout.write("return 0;\n}\n")
+        elif token[0] == "block_fnstart":
+            print "fxn_name() {",
+            # parseFns(token)
 
-    elif token[0] == "block_fnend":
-        print "}",
-        #fileout.write("}\n")
-    elif token[0] == "block_start":
-        print "{",
-        #fileout.write("{\n")
-    elif token[0] == "block_end":
-        print "}",
-        #fileout.write("}\n")
-    elif token[0] == "block_break":
-        print "break;",
-        #fileout.write("break;\n")
-    elif token[0] == "block_continue":
-        print "continue;",
-        #fileout.write("continue;\n")
+        elif token[0] == "block_fnend":
+            print "}",
+            #fileout.write("}\n")
+        #elif token[0] == "block_start":
+        #    print "{",
+            #fileout.write("{\n")
+        #elif token[0] == "block_end":
+        #    print "}",
+            #fileout.write("}\n")
+        elif token[0] == "block_break":
+            print "break;",
+            #fileout.write("break;\n")
+        elif token[0] == "block_continue":
+            print "continue;",
+            #fileout.write("continue;\n")
+        elif token[0] == "block_begin_body":
+            print ") {"
+        elif token[0] == "block_begin_check":
+            print "if (",
+        elif token[0] == "block_begin_cycle":
+            print "while (",
+        elif token[0] == "block_end":
+            print "}"
 
-    # -- others
-    elif token[0] == "formatting_space":
-        print " ",
-    elif token[0] == "formatting_tab":
-        print "\t",
-    elif token[0] == "formatting_newline":
-        print "\n",
-    elif token[0] == "expr_paren":
-        print token,
-    elif token[0] == "expr_addsub":
-        print token,
-    elif token[0] == "expr_muldiv":
-        print token,
-    elif token[0] == "expr_op":
-        parseExprOp(token[1])
+        # -- others
+        elif token[0] == "formatting_space":
+            print " ",
+        elif token[0] == "formatting_tab":
+            print "\t",
+        elif token[0] == "formatting_newline":
+            print "\n",
+        elif token[0] == "expr_paren":
+            print token,
+        elif token[0] == "expr_addsub":
+            print token,
+        elif token[0] == "expr_muldiv":
+            print token,
+        elif token[0] == "expr_op":
+            parseExprOp(token[1])
 
-    # Insert more todos here
-    else:
-        print token
-        print "syntax error on line "+str(linenum)
-        break
+        # Insert more todos here
+        else:
+            print token
+            print "syntax error on line "+str(linenum)
+            break
 
+def main():
+	tokenize()
+
+if __name__ == "__main__":
+	main()
