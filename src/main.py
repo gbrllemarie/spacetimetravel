@@ -25,11 +25,11 @@ source_output = os.path.splitext(source_name)[0] + ".c"
 # -- Lexical Analysis ---------------------------------------------------------#
 
 # general matching for tokens
-wspace = Rep(Str(" ")|Str("\t"))
+wspace      = Rep(Any(" \t"))
 ident_strip = Range("AZaz") + Rep(Range("AZaz09"))
-identifier = wspace+Str(":") + ident_strip + Str(":")+wspace
-integer = Rep1(Range("09")) 
-number = integer + (Str(".")+Rep1(Range("09"))|Empty)
+identifier  = wspace + Str(":") + ident_strip + Str(":") + wspace
+integer     = Rep1(Range("09"))
+number      = integer + (Str(".") + Rep1(Range("09")) | Empty)
 
 
 # -- generate arrays for lexicon --------------------------#
@@ -62,46 +62,59 @@ lex_reserved = [
     #( Str("warp"),               Begin('helper_subprogram')   ), # sub program call
 ]
 
+# datatypes and parsing
 lex_datatypes = [
     # data types
     ( Str("numeral"),           "datatype_int"      ), # int datatype
     ( Str("decimal"),           "datatype_float"    ), # float datatype
     ( Str("star"),              "datatype_char"     ), # char datatype
     ( Str("constellation"),     "datatype_string"   ), # string (char*) datatype
-    ( Str("day"),               "datatype_bool"     ) # bool datatype
+    ( Str("day"),               "datatype_bool"     ), # bool datatype
 ]
 
+vardec_token = ( Str("numeral", "decimal", "star", "day", "constellation")
+               + wspace + Str(":") + ident_strip + Str(":") + Eol )
+lex_vars = [
+    ( vardec_token,             "syntax_vardec"     ), # variable declaration
+    ( identifier + Str("<-"),   "syntax_varassign"  ), # variable assignment
+]
+
+# main function
+mainfn_start_token = Str("ALPHA") + wspace + Str(":time:") + wspace
+mainfn_end_token   = Str("OMEGA") + wspace + Str(":time:") + wspace
 lex_mainfn = [
-    (Str("ALPHA")+wspace+Str(":time:")+wspace,              "block_mainfnstart"    ),
-    (Str("OMEGA")+wspace+Str(":time:")+wspace,              "block_mainfnend"    ),
+    ( mainfn_start_token,       "block_mainfnstart" ),
+    ( mainfn_end_token,         "block_mainfnend"   ),
 ]
 
+# functions
+fncall_token = (Str("warp(")
+              + identifier
+              + Str(")(")
+              + Rep(Opt(Alt(number, identifier)
+                      + Rep(Str(",") + Rep(wspace + (number|identifier) + wspace)
+                      ))
+                  + Str(")"))
+              + Eol
+              )
+lex_fncall = [
+    ( fncall_token,             "helper_subprogram" ), # add functional calls
+]
+
+# expressions
 lex_expr_paren = Str("(")+Rep(AnyBut(""))+Str(")")+wspace
 lex_expr_op = Alt(identifier|number)+Rep(wspace+Any("+-*/")+wspace+Alt(identifier|number))
 lex_expr = [
-    (lex_expr_paren,                    "expr_paren"    ), # parenthesis
+    ( lex_expr_paren,           "expr_paren"        ), # parenthesis
     # (Alt(identifier|number)+Rep(wspace+Any("+-")+wspace+Alt(identifier|number)),         "expr_addsub"    ), # addition and subtraction
     # (Alt(identifier|number)+Rep(wspace+Any("*/")+wspace+Alt(identifier|number)),         "expr_muldiv"    ), # multiplication and division
-    (lex_expr_op,                       "expr_op"       ) # multiplication and division
+    ( lex_expr_op,              "expr_op"           ) # multiplication and division
 ]
 
-fncall_token = Str("warp(") + identifier + Str(")(") + Rep(
-    Opt(Alt(number,identifier)+Rep(Str(",")+Rep(wspace+(number|identifier)+wspace))
-    ) +Str(")"))+Eol
-lex_fncall = [
-    ( fncall_token,           "helper_subprogram"    ), # add functional call to lexicon
-]
-
-
+# comments
 comments_token = Str("%%") + Rep(AnyBut("%%")) + Str("%%")
 lex_comments = [
     ( comments_token,           "syntax_comment"    ), # add comments to lexicon
-]
-
-vardec_token = Str("numeral", "decimal", "star", "day", "constellation") +wspace+ Str(":")+ ident_strip + Str(":")+Eol
-lex_vars = [
-    ( vardec_token,                     "syntax_vardec"     ), # add variable declaration to lexicon
-    (identifier+Str("<-"),  "syntax_varassign"  ) # add variable assignment to lexicon
 ]
 
 # fns_token = Str("activate") + Rep(AnyBut("%%")) + Str("deactivate")
@@ -116,7 +129,7 @@ lex_vars = [
 # whitespaces and other formatting bits
 lex_formatting = [
     ( Str(" "),                 "formatting_space"  ), # copy over spaces
-    ( Str("\n"),                 "formatting_newline"  ), # copy over spaces
+    ( Str("\n"),                "formatting_newline"), # copy over newlines
     ( Str("\t"),                "formatting_tab"    ), # copy over tabs
 ]
 
@@ -127,9 +140,11 @@ lex_misc = [
 ]
 
 lex_error = [
-     ( AnyBut('\n'), "syn_error" ),
+     ( AnyBut("\n"), "syntax_error" ),
 ]
 
+# -- generate the lexicon ---------------------------------#
+# put everything together
 lex_tokens =  lex_reserved
 lex_tokens += lex_mainfn
 lex_tokens += lex_expr
@@ -140,9 +155,6 @@ lex_tokens += lex_formatting
 lex_tokens += lex_fncall
 lex_tokens += lex_error
 
-
-
-# -- generate the lexicon ---------------------------------#
 lexicon = Lexicon(lex_tokens)
 
 # -- Token Processing ---------------------------------------------------------#
@@ -151,25 +163,24 @@ lexicon = Lexicon(lex_tokens)
 scanner = Scanner(lexicon, source, source_output)
 
 def parseFns(token):
-    fxn_name = token[1].split(' ')[1][1:-1]
-    print token[1].split(' ')
-    print token[1].split(' ')[1][1:-1]+"()"
-
+    fxn_name = token[1].split(" ")[1][1:-1]
+    print token[1].split(" ")
+    print token[1].split(" ")[1][1:-1]+"()"
 
 def parseVardec(token):
-    varname= token.split(':')[1]
+    varname= token.split(":")[1]
     scan1 = Scanner(Lexicon(lex_datatypes), StringIO(token), source_output)
     tok = scan1.read()
     if tok[0] == "datatype_int":
-        print "int "+str(varname)+";"
+        print "int "+str(varname)+";",
     elif tok[0] == "datatype_float":
-        print "float "+str(varname)+";"
+        print "float "+str(varname)+";",
     elif tok[0] == "datatype_char":
-        print "char "+str(varname)+";"
+        print "char "+str(varname)+";",
     elif tok[0] == "datatype_string":
-        print "char* "+str(varname)+";"
+        print "char* "+str(varname)+";",
     elif tok[0] == "datatype_bool":
-        print "bool "+str(varname)+";"
+        print "bool "+str(varname)+";",
     return
 
 def parseFncall(token):
@@ -191,12 +202,13 @@ def parseExprOp(token, end=0):
         token = token+";"
     
     print token
+
 # read through the source input until EOF
 linenum = 1
 while 1:
     token = scanner.read()
     # print token
-    linenum += token[1].count('\n')
+    linenum += token[1].count("\n")
     # print linenum
 
     if token[0] is None:
@@ -209,86 +221,82 @@ while 1:
 
     # -- data types
     elif token[0] == "datatype_int":
-        print "int"
+        print "int",
     elif token[0] == "datatype_float":
-        print "float"
+        print "float",
     elif token[0] == "datatype_char":
-        print "char"
+        print "char",
     elif token[0] == "datatype_string":
-        print "char*"
+        print "char*",
     elif token[0] == "datatype_bool":
-        print "bool"
-        
+        print "bool",
 
     # -- constants   
     elif token[0] == "constant_void":
-        print "void"
-        
+        print "void",
     elif token[0] == "constant_true":
-        print "true"
-        
+        print "true",
     elif token[0] == "constant_false":
-        print "false"
-        
+        print "false",
 
     # -- syntax
     elif token[0] == "syntax_for":
-        print "for"
+        print "for",
     elif token[0] == "syntax_while":
-        print "while"
+        print "while",
     elif token[0] == "syntax_if":
-        print "if"
+        print "if",
     elif token[0] == "syntax_elseif":
-        print "else if"
+        print "else if",
     elif token[0] == "syntax_else":
-        print "else"
+        print "else",
     elif token[0] == "syntax_comment":
-        print "/*" + token[1][2:-2] + "*/"
-    elif token[0] == 'syntax_vardec':
+        print "/*" + token[1][2:-2] + "*/",
+    elif token[0] == "syntax_vardec":
         parseVardec(token[1])
-    elif token[0] == 'syntax_varassign':
-        tok = token[1].replace(":","")
-        tok = tok.replace("<-"," = ")
+    elif token[0] == "syntax_varassign":
+        tok = token[1].replace(":", "")
+        tok = tok.replace("<-", "=")
         print tok,
 
     # -- helpers
     elif token[0] == "helper_increment":
-        print "++"
+        print "++",
     elif token[0] == "helper_decrement":
-        print "--"
+        print "--",
     elif token[0] == "helper_typecast":
-        print "(typecast here)"                        # TODO
+        print "(typecast here)",                       # TODO
     elif token[0] == "helper_subprogram":
         parseFncall(token[1])
 
     # -- blocks
     elif token[0] == "block_main":
-        print "main"
+        print "main",
 
     elif token[0] == "block_mainfnstart":
-        print "int main() {\n"
+        print "int main() {",
         #fileout.write("int main() {\n")
     elif token[0] == "block_mainfnend":
-        print "return 0;\n}\n"
+        print "return 0;\n}",
         #fileout.write("return 0;\n}\n")
     elif token[0] == "block_fnstart":
-        print "fxn_name() {\n"
+        print "fxn_name() {",
         # parseFns(token)
 
     elif token[0] == "block_fnend":
-        print "return 0; \n}\n"
+        print "}",
         #fileout.write("}\n")
     elif token[0] == "block_start":
-        print "{\n"
+        print "{",
         #fileout.write("{\n")
     elif token[0] == "block_end":
-        print "}\n"
+        print "}",
         #fileout.write("}\n")
     elif token[0] == "block_break":
-        print "break;"
+        print "break;",
         #fileout.write("break;\n")
     elif token[0] == "block_continue":
-        print "continue;"
+        print "continue;",
         #fileout.write("continue;\n")
 
     # -- others
@@ -299,11 +307,11 @@ while 1:
     elif token[0] == "formatting_newline":
         print "\n",
     elif token[0] == "expr_paren":
-        print token
+        print token,
     elif token[0] == "expr_addsub":
-        print token
+        print token,
     elif token[0] == "expr_muldiv":
-        print token
+        print token,
     elif token[0] == "expr_op":
         parseExprOp(token[1])
 
