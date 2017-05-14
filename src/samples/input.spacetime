@@ -16,4 +16,5 @@ ALPHA :time:
     :start: <- 2
     numeral :answer:
     :answer: <- warp(:present:)(:start:)
+    display :answer:
 OMEGA :time:

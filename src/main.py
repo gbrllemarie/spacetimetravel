@@ -282,7 +282,7 @@ def parsePrintInput(token):
     elif typeof(varname) == "char-array": 
         format_code = "%s"
 
-    printf = '"printf("'
+    printf = 'printf("'
     c_print_string = printf + format_code + '", ' + varname + ");"
     
     return c_print_string
@@ -347,6 +347,8 @@ def parseExprParen(token):
 
 # read through the source input until EOF
 linenum = 1
+preprocess = "#include <stdio.h>\n#include <stdlib.h>\n"
+print preprocess
 while 1:
     token = scanner.read()
     # print token
