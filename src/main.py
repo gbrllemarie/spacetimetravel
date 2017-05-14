@@ -145,9 +145,32 @@ lex_misc = [
     ( AnyChar, IGNORE),
 ]
 
+
 lex_error = [
      ( AnyBut("\n"), "syntax_error" ),
 ]
+
+# main function
+#mainfn_start_token = Str("ALPHA") + wspace + Str(":time:") + wspace
+#mainfn_end_token   = Str("OMEGA") + wspace + Str(":time:") + wspace
+#lex_mainfn = [
+#    ( mainfn_start_token,       "block_mainfnstart" ),
+#    ( mainfn_end_token,         "block_mainfnend"   ),
+#]
+
+#for_condition = Str ("(since") + EXPRESSION + wspace + Str("until") + EXPRESSION + wspace +Str("do") TICK OR TOCK + Str(")")
+#lex_for = [
+#    ( Str("start loop"), "syntax_for"),
+#    ( Str("end loop"), "syntax_for_end"),
+#    ( for_condition, "syntax_for_condition"),
+#]
+
+#while_condition = Str ("(until") + EXPRESSION + Str(")")
+#lex_while = [
+#    ( Str("start cycle"), "syntax_while"),
+#    ( Str("end cycle"), "syntax_while_end"),
+#    ( while_condition, "syntax_while_condition"),
+#]
 
 # -- generate the lexicon ---------------------------------#
 # put everything together
