@@ -34,6 +34,7 @@ number      = integer + (Str(".") + Rep1(Range("09")) | Empty)
 
 # -- generate arrays for lexicon --------------------------#
 # reserved words
+lex_expr_paren_newline = Str("(")+Rep(AnyBut("\n"))+Str(")")+wspace
 lex_reserved = [
     #-# pattern #---------------# actions #---------#
       # constants
@@ -49,8 +50,8 @@ lex_reserved = [
     ( Str("receive") + identifier,           "syntax_scanf"       ), # scanf
     ( Str("display") + identifier,           "syntax_printf"       ), # printf
       # helpers
-    ( Str("tick"),              "helper_increment"  ), # ++
-    ( Str("tock"),              "helper_decrement"  ), # --
+    ( Str("tick") + lex_expr_paren_newline,              "helper_increment"  ), # ++
+    ( Str("tock") + lex_expr_paren_newline,              "helper_decrement"  ), # --
     ( Str("transform"),         "helper_typecast"   ), # type casting
       # blocks
     # ( Str("ALPHA"),             "block_mainfnstart" ), # function start
@@ -272,6 +273,15 @@ def parsePrintInput(token):
     
     return c_print_string
 
+def increment_or_decrement(token, incr_decr_concat):
+    varname = token.split(':')[1].strip()
+
+    if incr_decr_concat == "++" or incr_decr_concat == "--":
+        varname = varname + incr_decr_concat + ";"
+    else:
+        return "Error occured with helper"
+    return varname
+
 def parseFncall(token):
     tok = filter(None,re.split('\(|\)', str(token)))
     args = ""
@@ -364,9 +374,11 @@ while 1:
 
     # -- helpers
     elif token[0] == "helper_increment":
-        print "++",
+        c_output = increment_or_decrement(token[1], "++")
+        print c_output
     elif token[0] == "helper_decrement":
-        print "--",
+        c_output = increment_or_decrement(token[1], "--")
+        print c_output
     elif token[0] == "helper_typecast":
         print "(typecast here)",                       # TODO
     elif token[0] == "helper_subprogram":
