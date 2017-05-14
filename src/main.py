@@ -203,9 +203,28 @@ def typeof(variable):
 
 def parseScanInput(token):
     varname = token.split(':')[1].strip()
-    print "varname: ", varname
-    print "typeof(varname): ", typeof(varname)
-    # return
+    format_code = ""
+
+    # print "varname: ", varname
+    # print "typeof(varname): ", typeof(varname)
+    
+    if typeof(varname) == "int":
+        format_code = "%d"
+        varname = "&" + varname
+    elif typeof(varname) == "float":
+        format_code = "%lf"
+        varname = "&" + varname
+    elif typeof(varname) == "char": 
+        format_code = "%c"
+        varname = "&" + varname
+    elif typeof(varname) == "char*": 
+        print "varname = malloc(255);"
+        format_code = "%s"
+
+    scanf = "scanf("
+    c_scan_string = scanf + format_code + ", " + varname + ");"
+    
+    return c_scan_string
 
 def parseFncall(token):
     tok = filter(None,re.split('\(|\)', str(token)))
@@ -279,7 +298,7 @@ while 1:
     elif token[0] == "syntax_vardec":
         parseVardec(token[1])
     elif token[0] == 'syntax_scanf': 
-        parseScanInput(token[1])
+        print parseScanInput(token[1])
     elif token[0] == 'syntax_varassign':
         tok = token[1].replace(":","")
         tok = tok.replace("<-"," = ")

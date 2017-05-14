@@ -1,5 +1,11 @@
 ALPHA :time:
 	numeral :x:
+	decimal :y:
+	star :c:
+	constellation :str:
 
 	receive :x:
+	receive :y:
+	receive :c:
+	receive :str:
 OMEGA :time:
