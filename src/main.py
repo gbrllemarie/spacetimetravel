@@ -45,6 +45,7 @@ lex_reserved = [
     ( Str("check"),             "syntax_if"         ), # if
     ( Str("recheck"),           "syntax_elseif"     ), # else if
     ( Str("retreat"),           "syntax_else"       ), # else
+    ( Str("receive"),           "syntax_scanf"       ), # scanf
       # helpers
     ( Str("tick"),              "helper_increment"  ), # ++
     ( Str("tock"),              "helper_decrement"  ), # --
@@ -162,6 +163,9 @@ def parseVardec(token):
         print "bool "+str(varname)+";"
     return
 
+def parseInput(token):
+    print "In parseInput\ntoken: " + token
+
 def parseFncall(token):
     tok = filter(None,re.split('\(|\)', str(token)))
     args = ""
@@ -238,6 +242,8 @@ while 1:
         print token
     elif token[0] == 'syntax_vardec':
         parseVardec(token[1])
+    elif token[0] == 'syntax_input': 
+        parseInput(token[1])
 
     # -- helpers
     elif token[0] == "helper_increment":
