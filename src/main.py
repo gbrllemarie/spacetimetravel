@@ -47,6 +47,7 @@ lex_reserved = [
     ( Str("recheck"),           "syntax_elseif"     ), # else if
     ( Str("retreat"),           "syntax_else"       ), # else
     ( Str("receive") + identifier,           "syntax_scanf"       ), # scanf
+    ( Str("display") + identifier,           "syntax_printf"       ), # printf
       # helpers
     ( Str("tick"),              "helper_increment"  ), # ++
     ( Str("tock"),              "helper_decrement"  ), # --
@@ -221,10 +222,28 @@ def parseScanInput(token):
         print "varname = malloc(255);"
         format_code = "%s"
 
-    scanf = "scanf("
-    c_scan_string = scanf + format_code + ", " + varname + ");"
+    scanf = 'scanf("'
+    c_scan_string = scanf + format_code + '", "' + varname + ");"
     
     return c_scan_string
+
+def parsePrintInput(token): 
+    varname = token.split(':')[1].strip()
+    format_code = ""
+
+    if typeof(varname) == "int":
+        format_code = "%d"
+    elif typeof(varname) == "float":
+        format_code = "%.2f"
+    elif typeof(varname) == "char": 
+        format_code = "%c"
+    elif typeof(varname) == "char*": 
+        format_code = "%s"
+
+    printf = '"printf("'
+    c_print_string = printf + format_code + '", ' + varname + ");"
+    
+    return c_print_string
 
 def parseFncall(token):
     tok = filter(None,re.split('\(|\)', str(token)))
@@ -299,6 +318,8 @@ while 1:
         parseVardec(token[1])
     elif token[0] == 'syntax_scanf': 
         print parseScanInput(token[1])
+    elif token[0] == 'syntax_printf': 
+        print parsePrintInput(token[1])
     elif token[0] == 'syntax_varassign':
         tok = token[1].replace(":","")
         tok = tok.replace("<-"," = ")

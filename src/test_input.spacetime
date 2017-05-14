@@ -8,4 +8,9 @@ ALPHA :time:
 	receive :y:
 	receive :c:
 	receive :str:
+
+	display :x:
+	display :y:
+	display :c:
+	display :str:
 OMEGA :time:
