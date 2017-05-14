@@ -2,7 +2,7 @@ ALPHA :time:
 	numeral :x:
 	decimal :y:
 	star :c:
-	constellation :str:
+	constellation :str:<15>
 
 	receive :x:
 	receive :y:

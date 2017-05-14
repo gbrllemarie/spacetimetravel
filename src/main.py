@@ -75,7 +75,7 @@ lex_datatypes = [
     ( Str("numeral"),           "datatype_int"      ), # int datatype
     ( Str("decimal"),           "datatype_float"    ), # float datatype
     ( Str("star"),              "datatype_char"     ), # char datatype
-    ( Str("constellation"),     "datatype_string"   ), # string (char*) datatype
+    ( Str("constellation"),     "datatype_string"   ), # string (char[n]) datatype
     ( Str("day"),               "datatype_bool"     ), # bool datatype
 ]
 
@@ -212,7 +212,7 @@ def parseVardec(token):
         setDictVarAndType(varname, "char")
     elif tok[0] == "datatype_string":
         print "char  "+str(varname),
-        setDictVarAndType(varname, "char*")
+        setDictVarAndType(varname, "char-array")
     elif tok[0] == "datatype_bool":
         print "bool "+str(varname),
         setDictVarAndType(varname, "bool")
@@ -246,12 +246,11 @@ def parseScanInput(token):
     elif typeof(varname) == "char": 
         format_code = "%c"
         varname = "&" + varname
-    elif typeof(varname) == "char*": 
-        print "varname = malloc(255);"
+    elif typeof(varname) == "char-array": 
         format_code = "%s"
 
     scanf = 'scanf("'
-    c_scan_string = scanf + format_code + '", "' + varname + ");"
+    c_scan_string = scanf + format_code + '", ' + varname + ");"
     
     return c_scan_string
 
@@ -265,7 +264,7 @@ def parsePrintInput(token):
         format_code = "%.2f"
     elif typeof(varname) == "char": 
         format_code = "%c"
-    elif typeof(varname) == "char*": 
+    elif typeof(varname) == "char-array": 
         format_code = "%s"
 
     printf = '"printf("'
