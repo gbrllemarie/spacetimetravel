@@ -46,7 +46,7 @@ lex_reserved = [
     ( Str("check"),             "syntax_if"         ), # if
     ( Str("recheck"),           "syntax_elseif"     ), # else if
     ( Str("retreat"),           "syntax_else"       ), # else
-    ( Str("receive"),           "syntax_scanf"       ), # scanf
+    ( Str("receive") + identifier,           "syntax_scanf"       ), # scanf
       # helpers
     ( Str("tick"),              "helper_increment"  ), # ++
     ( Str("tock"),              "helper_decrement"  ), # --
@@ -158,7 +158,7 @@ def parseFns(token):
 
 
 def parseVardec(token):
-    varname= token.split(':')[1]
+    varname = token.split(':')[1]
     scan1 = Scanner(Lexicon(lex_datatypes), StringIO(token), source_output)
     tok = scan1.read()
     if tok[0] == "datatype_int":
@@ -174,7 +174,8 @@ def parseVardec(token):
     return
 
 def parseInput(token):
-    print "In parseInput\ntoken: " + token
+    print token
+    # return
 
 def parseFncall(token):
     tok = filter(None,re.split('\(|\)', str(token)))
@@ -250,7 +251,7 @@ while 1:
         print "/*" + token[1][2:-2] + "*/"
     elif token[0] == 'syntax_vardec':
         parseVardec(token[1])
-    elif token[0] == 'syntax_input': 
+    elif token[0] == 'syntax_scanf': 
         parseInput(token[1])
     elif token[0] == 'syntax_varassign':
         tok = token[1].replace(":","")
