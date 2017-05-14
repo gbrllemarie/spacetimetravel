@@ -30,6 +30,7 @@ ident_strip = Range("AZaz") + Rep(Range("AZaz09"))
 identifier  = wspace + Str(":") + ident_strip + Str(":") + wspace
 integer     = Rep1(Range("09"))
 number      = integer + (Str(".") + Rep1(Range("09")) | Empty)
+dtype       = Str("numeral")|Str("decimal")|Str("star")|Str("constellation")|Str("day")|Str("vacuum")
 
 
 # -- generate arrays for lexicon --------------------------#
@@ -81,7 +82,7 @@ lex_datatypes = [
 ]
 
 vardec_token = ( Str("numeral", "decimal", "star", "day", "constellation")
-               + wspace + Str(":") + ident_strip + Str(":") +Opt(Str("<")+integer+Str(">"))+ Eol )
+               + wspace + identifier +Opt(Str("<")+integer+Str(">"))+ Eol )
 lex_vars = [
     ( vardec_token,             "syntax_vardec"     ), # variable declaration
     ( identifier + Str("<-"),   "syntax_varassign"  ), # variable assignment
@@ -99,14 +100,19 @@ lex_mainfn = [
 fncall_token = (Str("warp(")
               + identifier
               + Str(")(")
-              + Rep(Opt(Alt(number, identifier)
+              + Opt(Alt(number, identifier)
                       + Rep(Str(",") + Rep(wspace + (number|identifier) + wspace)
-                      ))
-                  + Str(")"))
-              + Eol
-              )
+                      )
+               )+Str(")")+Eol)
+fnhead_token = Str("activate")+identifier+Str("with ")+Str("(")+ wspace+Rep(Opt(dtype+Alt(number, identifier)
+            + Rep(Str(",") + Rep(wspace+dtype+wspace + (number|identifier) + wspace)
+            ))
+            )+ Str(")") + wspace + Opt(Str("returns")+wspace+dtype)
 lex_fncall = [
-    ( fncall_token,             "helper_subprogram" ), # add functional calls
+    ( fncall_token,                         "helper_subprogram" ), # add functional calls
+    ( Str("transmit")+wspace+Alt(identifier|number),"helper_return" ), # add function return
+    ( fnhead_token,                         "helper_fnheader" ), # add function header
+    ( Str("deactivate")+wspace+identifier,  "helper_fnfooter" ), # add function header
 ]
 
 # expressions
@@ -192,6 +198,14 @@ lexicon = Lexicon(lex_tokens)
 
 # generate the scanner
 scanner = Scanner(lexicon, source, source_output)
+
+
+def getName(str1):
+    return str1.replace(':', '')
+
+def getDtype(type):
+    list_type =  {'numeral':'int', 'decimal': 'float', 'star':'char', 'constellation': 'char *','day':'bool'}
+    return list_type[type]
 
 def parseFns(token):
     fxn_name = token[1].split(" ")[1][1:-1]
@@ -282,6 +296,23 @@ def increment_or_decrement(token, incr_decr_concat):
         return "Error occured with helper"
     return varname
 
+def parseFnheader(token):
+    # 0 - activate, 1 - fname, 2 - with, 3 - args, -2- returns, -1 - return type
+    tok = token.split(' ')
+    fname = getName(tok[1])
+    args = (' '.join(tok[3:-2])).strip('()')
+    args = filter(None,args.split(','))
+    return_type = tok[-1]
+
+    print getDtype(return_type)+" "+fname+" (",
+    for i in range(len(args)):
+        if i > 0:
+            print ", ",
+        temp = filter(None,args[i].split(' '))
+        print getDtype(temp[0])+" "+getName(temp[1]),
+    print ") {",
+
+
 def parseFncall(token):
     tok = filter(None,re.split('\(|\)', str(token)))
     args = ""
@@ -291,15 +322,20 @@ def parseFncall(token):
             if raw_args[i][0] == ':' and raw_args[i][-1] == ':':
                 raw_args[i] = raw_args[i][1:-1]
         args = ",".join(raw_args)
+    print tok[1][1:-1]+"("+args+");",
     print "/** function call to "+tok[1][1:-1]+" **/"
-    print tok[1][1:-1]+"("+args+");"
     return
 
-def parseExprOp(token, end=0):
-    token.replace(":","")
-    if end == 0:
+
+def parseFnreturn(token):
+    tok = token.split(' ')
+    tok[1] = tok[1].replace(':', '')
+    print "return "+tok[1]+";"
+
+def parseExprOp(token, end=1):
+    token = token.replace(":","")
+    if end == 1:
         token = token+";"
-    
     return token
 
 def parseExprParen(token):
@@ -307,7 +343,7 @@ def parseExprParen(token):
     scan1 = Scanner(Lexicon(lex_expr), StringIO(strip_token), source_output)
     tok = scan1.read()
     #if tok[0] == ""
-
+    
 
 # read through the source input until EOF
 linenum = 1
@@ -316,7 +352,6 @@ while 1:
     # print token
     linenum += token[1].count("\n")
     # print linenum
-
     if token[0] is None:
         break
     # TODO: this is where actions are defined for each token
@@ -366,10 +401,7 @@ while 1:
         print parsePrintInput(token[1])
     elif token[0] == 'syntax_varassign':
         tok = token[1].replace(":","")
-        tok = tok.replace("<-"," = ")
-    elif token[0] == "syntax_varassign":
-        tok = token[1].replace(":", "")
-        tok = tok.replace("<-", "=")
+        tok = tok.replace("<-"," =")
         print tok,
 
     # -- helpers
@@ -383,6 +415,12 @@ while 1:
         print "(typecast here)",                       # TODO
     elif token[0] == "helper_subprogram":
         parseFncall(token[1])
+    elif token[0] == "helper_return":
+        parseFnreturn(token[1])
+    elif token[0] == "helper_fnheader":
+        parseFnheader(token[1])
+    elif token[0] == "helper_fnfooter":
+        print "}"
 
     # -- blocks
     elif token[0] == "block_main":
@@ -395,8 +433,8 @@ while 1:
         print "return 0;\n}",
         #fileout.write("return 0;\n}\n")
     elif token[0] == "block_fnstart":
-        print "fxn_name() {",
-        # parseFns(token)
+        #print "fxn_name() {",
+        pass
 
     elif token[0] == "block_fnend":
         print "}",
@@ -428,7 +466,7 @@ while 1:
     elif token[0] == "expr_muldiv":
         print token,
     elif token[0] == "expr_op":
-        parseExprOp(token[1])
+        print parseExprOp(token[1])
 
     # Insert more todos here
     else:

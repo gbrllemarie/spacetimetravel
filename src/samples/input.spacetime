@@ -4,16 +4,16 @@
     Simple addition using functions
 -- %%
 
-activate :present: (with numeral :x:) returns numeral
-    :x: = :x: + 2
+activate :present: with (numeral :x:) returns numeral
+    :x: <- :x: + 2
     transmit :x:
 deactivate :present:
 
 
 ALPHA :time:
     %% -- declare variables -- %%
-    numeral :start: 
+    numeral :start:
     :start: <- 2
-    numeral :answer: 
-    :answer: <- warp (:present:) (:start:)
+    numeral :answer:
+    :answer: <- warp(:present:)(:start:)
 OMEGA :time:
