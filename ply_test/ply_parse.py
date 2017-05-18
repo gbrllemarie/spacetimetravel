@@ -1,9 +1,25 @@
+##################################################
+#
+#	ply_parse.py
+#
+#	How to use ply_parse.py:
+#
+#	import ply_parse
+#	status = ply_parse.startParse()
+#	returns True if parsing if OK
+#
+#	if status != True:
+#		exit() 		-- parsing fails
+#
+##################################################
+
 import ply.lex as lexy
 import sys, os
 import ply.yacc as yacc
 
 
 fxn_stack = []
+fxn_list = []
 ########## LIST OF STATES ##########################
 # states = (
 #    ('foo','exclusive'),
@@ -122,7 +138,7 @@ t_ignore  = ' \t'
 
 # Error handling rule
 def t_error(t):
-    print("Illegal characters '%s' in line %i" % (t.value,t.lineno))
+    print("Error in line %i" % (t.lineno))
     # print(t.value)
     # t.lexer.skip(1)
     exit()
@@ -156,10 +172,15 @@ def p_fxn(t):
 def p_fxnheader(t):
 	''' fxnheader : fxn_head identifier FXNWITH LPAREN fxnargs RPAREN fxnret'''
 	if(len(fxn_stack) > 0):
-		print "ERROR: Nested function on line "+str(t.lineno)
+		print "ERROR: Nested function in line "+str(t.lineno(2))
 		exit()
 	# print t[2]+"push"
-	fxn_stack.append(t[2])
+	fname = t[2].strip(' ')
+	if fname in fxn_list:
+		print "ERROR: Function ''"+fname+"'' already defined in line "+str(t.lineno(2))
+		exit()
+	fxn_list.append(fname)
+	fxn_stack.append(fname)
 	pass
 	
 
@@ -181,8 +202,9 @@ def p_fxnret(t):
 def p_fxnfooter(t):
 	''' fxnfooter : fxn_foot identifier'''
 	# print t[2]
-	if fxn_stack[-1] == t[2]:
-		print "ERROR: Function names do not match ''"+t[2]+"''"
+	# print fxn_stack
+	if fxn_stack[-1] != t[2].strip(' '):
+		print "ERROR: Function names do not match ''"+t[2]+"'' in line "+str(t.lineno(2))
 		exit()
 	fxn_stack.pop()
 	pass
@@ -319,7 +341,6 @@ def p_error(p):
 	exit()
 
 
-
 def startParse():
 	data = []
 	source_name = sys.argv[1]
@@ -330,11 +351,20 @@ def startParse():
 	lexer.input(data)
 
 	parser = yacc.yacc(debug=False)
-
-	toks = []
-	# try:
 	parser.parse(data,tracking=True)
-	print "PARSING IS SUCCESSFUL"
+
+	# toks = []
+	# tok1 =""
+	# lexer.input(data)
+	# while True:
+	#     tok = lexer.token()
+	#     if not tok: 
+	#         break      # No more input
+	#     toks.append(tok.value)
+	#     tok1 = tok1+tok.value
+	# print toks
+	# print tok1
+	return True
 
 
 if __name__ == "__main__":
