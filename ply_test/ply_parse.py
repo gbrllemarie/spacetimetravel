@@ -1,27 +1,30 @@
 import ply.lex as lexy
-import sys
+import sys, os
 import ply.yacc as yacc
-########## LIST OF STATES ########################
+
+
+fxn_stack = []
+########## LIST OF STATES ##########################
 # states = (
 #    ('foo','exclusive'),
 #    ('bar','inclusive'),
 # )
 
-########## LIST OF TOKENS #########################
+########## LIST OF TOKENS ##########################
 tokens = ('COMMENTS',  )
 
 ############ REGEX FOR TOKENS ######################
 wspace      = r"[ \t]*"
 ident_strip = r"([A-Za-z][A-Za-z0-9]*)"
-identifier 	= r"("+wspace+':'+ident_strip+':'+wspace+")"
-t_identifier  = r''+wspace+identifier+wspace
+ident 	= r"("+wspace+':'+ident_strip+':'+wspace+")"
+t_identifier = r"("+wspace+ident+wspace+")"
 integer     = r'[0-9]+'
 t_intnum	= integer
 t_floatnum    = r'('+integer+'\.'+integer+')'
 t_dtype       = r"numeral|decimal|constellation|day|vacuum" 
 # temporarily removed ``star'' since it conflicts with start cycle/loop
 
-tok_atoms = ('ident_strip','identifier', 'intnum', 'floatnum', 'dtype',)
+tok_atoms = ('identifier', 'intnum', 'floatnum', 'dtype',)
 
 ##### TOKENS FOR SYMBOLS ####
 t_LPAREN  		= r'\('
@@ -47,17 +50,19 @@ t_INITIAL_main_foot = r"(OMEGA"+wspace+":time:)"
 
 tok_mainfxn = ('main_head', 'main_foot',)
 
-t_INITIAL_fxn_head = r"activate"+identifier
-t_INITIAL_fxn_foot = r"deactivate"+identifier
+t_INITIAL_fxn_head = r"(activate)"
+t_INITIAL_fxn_foot = r"(deactivate)"
 t_FXNRETURN = r"(returns)"
 t_FXNWITH = r"(with)"
+t_FXNWARP= r"(warp)"
 
 
-t_fxn_return = r"(transmit"+wspace+")"
+t_fxn_returnval = r"(transmit)"
 
-tok_fxn =  ('fxn_head', 'fxn_foot', 'fxn_return', 'FXNRETURN', 'FXNWITH')
+tok_fxn =  ('fxn_head', 'fxn_foot', 'fxn_returnval', 'FXNRETURN', 'FXNWITH',
+	'FXNWARP')
 
-####### TOKENS FOR STATEMENTS #################
+####### TOKENS FOR STATEMENTS ###################
 ## TOKEN FOR LOOPS ##
 
 
@@ -84,7 +89,7 @@ tok_ifelse	= ('START_CHECK', 'END_CHECK', 'RECHECK', 'RETREAT',)
 
 
 
-####### TOKENS FOR I/O #################
+####### TOKENS FOR I/O #########################
 t_DISPLAY			= r"(display )"
 t_RECEIVE			= r"(receive )"
 
@@ -119,9 +124,8 @@ t_ignore  = ' \t'
 def t_error(t):
     print("Illegal characters '%s' in line %i" % (t.value,t.lineno))
     # print(t.value)
-    t.lexer.skip(1)
+    # t.lexer.skip(1)
     exit()
-
 
 
 tokens += tok_atoms
@@ -133,40 +137,70 @@ tokens += tok_loops
 tokens += tok_ifelse
 # tokens += tok_misc
 
-print tokens
+# print tokens
 
 
-############ YACC ###########################
+############ YACC #############################
 def p_program(t):
-	'program : comment fxn main'
+	'program : comment fxns main'''
 
+def p_fxns(t):
+	'''fxns : fxn fxns
+			| empty'''
+	pass
 
 def p_fxn(t):
-	'''fxn : fxnheader 
-		| empty'''
-	print "fxn detected"
+	'''fxn : fxnheader statements fxnfooter comment'''
+	# print "FXN OK"
 
 def p_fxnheader(t):
-	''' fxnheader : fxn_head FXNWITH LPAREN fxnargs RPAREN fxnret'''
+	''' fxnheader : fxn_head identifier FXNWITH LPAREN fxnargs RPAREN fxnret'''
+	if(len(fxn_stack) > 0):
+		print "ERROR: Nested function on line "+str(t.lineno)
+		exit()
+	# print t[2]+"push"
+	fxn_stack.append(t[2])
+	pass
+	
 
 def p_fxnargs(t):
 	'''fxnargs : fxnarg
-				| fxnarg COMMA fxnargs'''
+				| fxnarg COMMA fxnarg
+				| empty'''
+	pass
 
 def p_fxnarg(t):
-	''' fxnarg : dtype identifier
-				| empty'''
+	''' fxnarg : dtype identifier'''
+	pass
 
 def p_fxnret(t):
 	''' fxnret : FXNRETURN dtype
 				| empty'''
+	pass
+
+def p_fxnfooter(t):
+	''' fxnfooter : fxn_foot identifier'''
+	# print t[2]
+	if fxn_stack[-1] == t[2]:
+		print "ERROR: Function names do not match ''"+t[2]+"''"
+		exit()
+	fxn_stack.pop()
+	pass
+
+def p_trans(p):
+	''' trans : fxn_returnval identifier
+				| fxn_returnval intnum
+				| fxn_returnval floatnum'''
+	# print "transmit"
+	pass
+
 
 def p_main(t):
     'main : main_head statements main_foot'
     # print "int main(void){"
-    # # print t[2]
+    # print t[1].split(' ')
     # print "return 0;\n}"
-    print "MAIN OK"
+    # print "MAIN OK"
 
 def p_statemets(t):
 	'''statements : expr
@@ -176,27 +210,31 @@ def p_statemets(t):
 				| loops statements
 				| ifelse statements
 				| inout statements
+				| warp statements
+				| trans
 				| empty'''
 
 def p_inout(t):
 	'''inout : DISPLAY identifier
 			| RECEIVE identifier'''
-	print "I/O detected"
+	# print "I/O detected"
 
+# def p_identifier(t):
+# 	'''identifier : ident'''
 
 def p_var_dec(t):
 	'var_dec : dtype identifier'
-	print "var dec"
+	# print "var dec"
 
 
 def p_var_assign(t):
 	'var_assign : identifier ASSIGN expr'
-	print "var assign"
+	# print "var assign"
 
 def p_comment(t):
 	'''comment : COMMENTS comment
 				| empty '''
-	print "comments"
+	# print "comments"
 
 def p_expr(t):
     '''expr : LPAREN expr RPAREN
@@ -204,14 +242,14 @@ def p_expr(t):
     		| expr MOD expr
     		| intnum
     		| floatnum
-    		| identifier 
+    		| identifier
+    		| warp
     		| var_assign'''
 
     # print "int main(void){"
-    print t[1]
     # print "return 0;\n}"
     # print t[-1]
-    print "EXPR OK"
+    # print "EXPR OK"
 
 def p_expr2(t):
     '''expr2 : LPAREN expr2 RPAREN
@@ -219,21 +257,22 @@ def p_expr2(t):
     		| expr2 MOD expr2
     		| intnum
     		| floatnum
+    		| warp
     		| identifier'''
     # print "int main(void){"
     # print "return 0;\n}"
     # print t[-1]
-    print "EXPR2 OK"
+    # print "EXPR2 OK"
 
 def p_condition(t):
 	'''condition : expr2 relation expr2
 				|	var_assign'''
-	print "condition ok"
+	# print "condition ok"
 
 def p_relation(t):
 	'''relation : RELATIONAL
 				| RELATIONALBIT'''
-	print "relation ok"
+	# print "relation ok"
 
 def p_loops(t):
 	'''loops : while
@@ -242,68 +281,61 @@ def p_loops(t):
 
 def p_for(t):
 	'''for : START_LOOP LPAREN SINCE condition UNTIL condition DO TICKTOK identifier RPAREN RPAREN statements END_LOOP'''
-	print "for loop"
+	# print "for loop"
 
 def p_while(t):
 	'''while : START_CYCLE LPAREN UNTIL condition RPAREN statements END_CYCLE'''
-	print "while loop"
+	# print "while loop"
 
 def p_ifelse(t):
 	'''ifelse : START_CHECK LPAREN condition RPAREN statements otherif default END_CHECK'''
-	print "if-else block"
+	# print "if-else block"
 
 def p_otherif(t):
 	'''otherif : otherif RECHECK LPAREN condition RPAREN statements
 				| empty'''
+	# print "other block"
 
 def p_default(t):
 	'''default : RETREAT statements 
 				| empty'''
+	# print "default block"
 
+def p_warp(p):
+	'''warp : FXNWARP LPAREN identifier RPAREN LPAREN warpargs RPAREN'''
+	# print "warp"
+
+def p_warpargs(p):
+	'''warpargs : expr
+				| expr COMMA expr
+				| empty'''
 
 def p_empty(p):
     'empty :'
     pass
 
 def p_error(p):
-	print p
-	print "error"
+	print "Error dectected in line "+str(p.lineno)
+	exit()
 
 
 
+def startParse():
+	data = []
+	source_name = sys.argv[1]
+	with open(source_name, 'r') as content_file:
+	    data = content_file.read()
 
-#############################################
-# dictionary of names
-names = { }
+	lexer = lexy.lex()
+	lexer.input(data)
 
-data = []
-source_name = sys.argv[1]
-with open(source_name, 'r') as content_file:
-    data = content_file.read()
+	parser = yacc.yacc(debug=False)
 
-lexer = lexy.lex()
-lexer.input(data)
+	toks = []
+	# try:
+	parser.parse(data,tracking=True)
+	print "PARSING IS SUCCESSFUL"
 
-parser = yacc.yacc()
-# Tokenize
 
-# for tok in lexer:
-# 	print(tok)
-
-toks = []
-parser.parse(data)
-lexer.input(data)
-# print "\n\n=========LEX TOKENS ==============="
-# while True:
-
-#     tok = lexer.token()
-#     print tok
-#     if not tok: 
-#         break      # No more input
-#     # print(tok.type, tok.value, tok.lineno)
-#     toks.append(tok)
-    # print(tok.type, tok.value, tok.lineno, tok.lexpos)
-
-# print "\n\n============TOKS ================="
-# for i in toks:
-# 	print(i.value)
+if __name__ == "__main__":
+	startParse()
