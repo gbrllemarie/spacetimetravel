@@ -8,6 +8,8 @@ def start_action(scanner, text):
 def condition_expr_action(scanner, text):
     text = text.replace(":", "")
     text = text.replace("?=", "==")
+    text = text.replace("?&", "&&")
+    text = text.replace("?|", "||")
     text = text.replace("?", "")
     scanner.write(text)
 
@@ -27,7 +29,7 @@ def apply(scanner):
     str_literal = Str("\"") + Rep(Rep(AnyBut("\\") + Str("\\")) + AnyBut("\"")) + Str("\"")
     num = Opt(Str("-")) + Rep(Range("09")) + Opt(Str(".") + Rep(Range("09")))
     name = (var | str_literal | num)
-    operator = Str("+", "-", "/", "*", "%", "?=", "?!=", "?>", "?<", "?>=", "?<=")
+    operator = Str("+", "-", "/", "*", "%", "?=", "?!=", "?>", "?<", "?>=", "?<=", "?&", "&", "?|", "|")
     expression = ws + name + ws + Rep(name + ws + operator + ws)
 
     scanner.add_lexeme({

@@ -4,6 +4,21 @@
     Outputs all leap years between two given inputs.
 -- %%
 
+%% -- helper functions -- %%
+
+activate :isLeap: with (numeral :year:) returns day
+    day :out:
+    :out: <- darkness
+
+    %% check if leap year
+    start check (:year: % 4 ?= 0 ?& :year: % 100 ?!= 0 ?| :year: % 400 ?= 0)
+        %% it's a leap year, print :year: %%
+        print(:year:) %% TODO: i/o syntax %%
+    end check
+
+    transmit :out:
+deactivate :isLeap:
+
 %% -- main sequence -- %%
 ALPHA :time:
     %% -- declare variables -- %%
