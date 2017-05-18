@@ -23,6 +23,12 @@ def set_action(scanner, text):
     scanner.write(text)
     scanner.begin("variables_set_state")
 
+def set_state_warp_action(scanner, text):
+    text = text.replace("warp(", "")
+    text = text.replace(")", "", 1)
+    text = text.replace(":", "")
+    scanner.write(text)
+
 def set_state_any_action(scanner, text):
     scanner.write(text)
 
@@ -39,11 +45,12 @@ def apply(scanner):
         "day"
     ]
 
-    definition = ( Str(*datatypes) + Rep1(Any(" \t")) + Str(":")
-               +   Range("AZaz") + Rep(Range("AZaz09")) + Str(":") )
+    ws = Rep(Any(" \t"))
+    name = Str(":") + Range("AZaz") + Rep(Range("AZaz09")) + Str(":")
 
-    set_value = ( Str(":") + Range("AZaz") + Rep(Range("AZaz09")) + Str(":")
-              +   Rep(Any(" \t")) + Str("<-") + Rep(Any(" \t")) )
+    definition = Str(*datatypes) + ws + name
+    set_value = name + ws + Str("<-") + ws
+    warp_pattern = Str("warp(") + name + Str(")") + Opt(Str("(") + name + Str(")"))
 
     # define and initialize
     # -- todo
@@ -64,6 +71,10 @@ def apply(scanner):
 
     # variable setting state
     scanner.add_state("variables_set_state", [{
+        "token": "variables_set_state_warp",
+        "pattern": warp_pattern,
+        "action": set_state_warp_action
+    }, {
         "token": "variables_set_state_any",
         "pattern": Rep(AnyBut("\n")),
         "action": set_state_any_action

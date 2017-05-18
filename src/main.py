@@ -28,6 +28,7 @@ scanner = SpaceTimeScanner(source, source_name)
 
 # manually apply syntax modules in an approriate order
 syntax.mainfn.apply(scanner)
+syntax.functions.apply(scanner)
 syntax.ifblock.apply(scanner)
 syntax.forloop.apply(scanner)
 syntax.variables.apply(scanner)
