@@ -31,7 +31,8 @@ identifier  = wspace + Str(":") + ident_strip + Str(":") + wspace
 integer     = Rep1(Range("09"))
 number      = integer + (Str(".") + Rep1(Range("09")) | Empty)
 dtype       = Str("numeral")|Str("decimal")|Str("star")|Str("constellation")|Str("day")|Str("vacuum")
-
+equality_operators = Str(">") | Str("<") | Str(">=") | Str("<=") | Str("==") | Str("!=")
+check_token = wspace + Str("(")+ Rep(Range("AZaz09")) + wspace + equality_operators + wspace + Rep(Range("AZaz09")) + Str(")")
 
 # -- generate arrays for lexicon --------------------------#
 # reserved words
@@ -45,7 +46,7 @@ lex_reserved = [
       # syntax
     ( Str("loop"),              "syntax_for"        ), # for loop
     ( Str("cycle"),             "syntax_while"      ), # while loop
-    ( Str("check"),             "syntax_if"         ), # if
+    ( Str("check") + check_token,             "syntax_if"         ), # if
     ( Str("recheck"),           "syntax_elseif"     ), # else if
     ( Str("retreat"),           "syntax_else"       ), # else
     ( Str("receive") + identifier,           "syntax_scanf"       ), # scanf
@@ -60,6 +61,7 @@ lex_reserved = [
     # ( Str("activate"),          "block_fnstart"     ), # function start
     # ( Str("deactivate"),        "block_fnend"       ), # function end
     ( Str("start"),             "block_start"       ), # block start
+    ( Str("end check"),         "block_end_if"         ), # block end check
     ( Str("end"),               "block_end"         ), # block end
     ( Str("walangforever"),     "block_break"       ), # break
     ( Str("magbbreakdinkayo"),  "block_continue"    ) # continue
@@ -343,6 +345,11 @@ def parseExprParen(token):
     scan1 = Scanner(Lexicon(lex_expr), StringIO(strip_token), source_output)
     tok = scan1.read()
     #if tok[0] == ""
+
+def parseIfClause(token): 
+    c_if_syntax = token.replace("check", "if")
+    c_if_syntax = c_if_syntax + " {"
+    return c_if_syntax
     
 
 # read through the source input until EOF
@@ -388,9 +395,13 @@ while 1:
     elif token[0] == "syntax_while":
         print "while",
     elif token[0] == "syntax_if":
-        print "if",
+        print parseIfClause(token[1])
     elif token[0] == "syntax_elseif":
-        print "else if",
+        print '-----'
+        print token[1]
+        print '-----'
+    elif token[0] == "block_end_if":
+        print "};"
     elif token[0] == "syntax_else":
         print "else",
     elif token[0] == "syntax_comment":

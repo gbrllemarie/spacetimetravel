@@ -1,0 +1,5 @@
+ALPHA :time:
+start check (1 == 1)
+	%% do stuff %%
+end check 
+OMEGA :time:
