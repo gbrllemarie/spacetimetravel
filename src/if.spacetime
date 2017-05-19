@@ -1,5 +1,9 @@
 ALPHA :time:
 start check (1 == 1)
 	%% do stuff %%
+recheck (2 == 2)
+	%% do other stuff %%
+retreat 
+	%% do else other stuff %%
 end check 
 OMEGA :time:

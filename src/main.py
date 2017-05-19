@@ -47,7 +47,7 @@ lex_reserved = [
     ( Str("loop"),              "syntax_for"        ), # for loop
     ( Str("cycle"),             "syntax_while"      ), # while loop
     ( Str("check") + check_token,             "syntax_if"         ), # if
-    ( Str("recheck"),           "syntax_elseif"     ), # else if
+    ( Str("recheck") + check_token,           "syntax_elseif"     ), # else if
     ( Str("retreat"),           "syntax_else"       ), # else
     ( Str("receive") + identifier,           "syntax_scanf"       ), # scanf
     ( Str("display") + identifier,           "syntax_printf"       ), # printf
@@ -346,11 +346,10 @@ def parseExprParen(token):
     tok = scan1.read()
     #if tok[0] == ""
 
-def parseIfClause(token): 
-    c_if_syntax = token.replace("check", "if")
+def parseIfElseIfElseClause(spacetime_syntax, c_syntax, token):
+    c_if_syntax = token.replace(spacetime_syntax, c_syntax)
     c_if_syntax = c_if_syntax + " {"
-    return c_if_syntax
-    
+    return c_if_syntax    
 
 # read through the source input until EOF
 linenum = 1
@@ -395,15 +394,13 @@ while 1:
     elif token[0] == "syntax_while":
         print "while",
     elif token[0] == "syntax_if":
-        print parseIfClause(token[1])
+        print parseIfElseIfElseClause("check", "if", token[1])
     elif token[0] == "syntax_elseif":
-        print '-----'
-        print token[1]
-        print '-----'
-    elif token[0] == "block_end_if":
-        print "};"
+        print parseIfElseIfElseClause("recheck", "else if", token[1])
     elif token[0] == "syntax_else":
-        print "else",
+        print parseIfElseIfElseClause("retreat", "else", token[1])
+    elif token[0] == "block_end_if":
+        print "}"
     elif token[0] == "syntax_comment":
         print "/*" + token[1][2:-2] + "*/",
     elif token[0] == "syntax_vardec":
