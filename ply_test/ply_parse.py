@@ -17,7 +17,7 @@ import ply.lex as lexy
 import sys, os
 import ply.yacc as yacc
 
-
+debug = 0
 fxn_stack = []
 fxn_list = []
 ########## LIST OF STATES ##########################
@@ -30,23 +30,25 @@ fxn_list = []
 tokens = ('COMMENTS',  )
 
 ############ REGEX FOR TOKENS ######################
-wspace      = r"[ \t]*"
-ident_strip = r"([A-Za-z][A-Za-z0-9]*)"
-ident 	= r"("+wspace+':'+ident_strip+':'+wspace+")"
-t_identifier = r"("+wspace+ident+wspace+")"
-integer     = r'[0-9]+'
-t_intnum	= integer
-t_floatnum    = r'('+integer+'\.'+integer+')'
-t_dtype       = r"numeral|decimal|constellation|day|vacuum" 
-# temporarily removed ``star'' since it conflicts with start cycle/loop
+wspace      	= r"[ \t]*"
+ident_strip 	= r"([A-Za-z][A-Za-z0-9]*)"
+ident 			= r"("+wspace+':'+ident_strip+':'+wspace+")"
+t_identifier 	= r"("+wspace+ident+wspace+")"
+integer			= r'[0-9]+'
+t_intnum		= integer
+t_floatnum		= r'('+integer+'\.'+integer+')'
+t_dtype			= r"numeral|decimal|constellation|day|vacuum|starz" 
+t_LTHAN			= r'<'
+t_GTHAN			= r'>'
 
-tok_atoms = ('identifier', 'intnum', 'floatnum', 'dtype',)
+tok_atoms = ('identifier', 'intnum', 'floatnum',
+	'dtype','LTHAN', 'GTHAN')
 
 ##### TOKENS FOR SYMBOLS ####
 t_LPAREN  		= r'\('
 t_RPAREN  		= r'\)'
 t_OPERATION 	= r'(\+|-|\*|\/)'
-t_RELATIONAL 	= r"\?(!?=|>=?|<=?)"
+t_RELATIONAL 	= r"\?((!?=)|(>=?)|(<=?)|(\&)|(\|))"
 t_RELATIONALBIT = r"(\&\&|\|\|)"
 t_MOD			= r"(mod)"
 t_COMMA			= r','
@@ -66,11 +68,11 @@ t_INITIAL_main_foot = r"(OMEGA"+wspace+":time:)"
 
 tok_mainfxn = ('main_head', 'main_foot',)
 
-t_INITIAL_fxn_head = r"(activate)"
-t_INITIAL_fxn_foot = r"(deactivate)"
-t_FXNRETURN = r"(returns)"
-t_FXNWITH = r"(with)"
-t_FXNWARP= r"(warp)"
+t_INITIAL_fxn_head	= r"(activate)"
+t_INITIAL_fxn_foot	= r"(deactivate)"
+t_FXNRETURN 		= r"(returns)"
+t_FXNWITH			= r"(with)"
+t_FXNWARP			= r"(warp)"
 
 
 t_fxn_returnval = r"(transmit)"
@@ -89,7 +91,7 @@ t_END_LOOP		= r"(end\ loop)"
 t_UNTIL			= r"(until)"
 t_SINCE			= r"(since)"
 t_DO 			= r"(do)"
-t_TICKTOK		= r"(tick|tock)\("
+t_TICKTOK		= r"(tick|tock)"
 
 tok_loops = ('START_CYCLE', 'END_CYCLE',
 	'START_LOOP', 'END_LOOP', 'UNTIL', 'SINCE', 'DO', 'TICKTOK')
@@ -139,9 +141,10 @@ t_ignore  = ' \t'
 # Error handling rule
 def t_error(t):
     print("Error in line %i" % (t.lineno))
-    # print(t.value)
-    # t.lexer.skip(1)
-    exit()
+    print(t.value)
+    t.lexer.skip(1)
+    if debug == 0:
+    	exit()
 
 
 tokens += tok_atoms
@@ -225,7 +228,7 @@ def p_main(t):
     # print "MAIN OK"
 
 def p_statemets(t):
-	'''statements : expr
+	'''statements : expr statements
 				| var_dec statements
 				| var_assign statements
 				| comment statements
@@ -245,8 +248,13 @@ def p_inout(t):
 # 	'''identifier : ident'''
 
 def p_var_dec(t):
-	'var_dec : dtype identifier'
+	'''var_dec : dtype identifier
+				| var_array'''
 	# print "var dec"
+
+def p_var_array(t):
+	'var_array : dtype identifier LTHAN intnum GTHAN'
+	# print "var array"
 
 
 def p_var_assign(t):
@@ -266,6 +274,7 @@ def p_expr(t):
     		| floatnum
     		| identifier
     		| warp
+    		| ticktock
     		| var_assign'''
 
     # print "int main(void){"
@@ -280,15 +289,23 @@ def p_expr2(t):
     		| intnum
     		| floatnum
     		| warp
+    		| ticktock
     		| identifier'''
     # print "int main(void){"
     # print "return 0;\n}"
     # print t[-1]
     # print "EXPR2 OK"
 
+def p_ticktock(t):
+ 	'ticktock : TICKTOK LPAREN identifier RPAREN'
+ 	print "ticktok"
+
 def p_condition(t):
 	'''condition : expr2 relation expr2
-				|	var_assign'''
+				| expr2 relation condition
+				| var_assign
+				| identifier
+				| intnum'''
 	# print "condition ok"
 
 def p_relation(t):
@@ -302,7 +319,7 @@ def p_loops(t):
 	pass
 
 def p_for(t):
-	'''for : START_LOOP LPAREN SINCE condition UNTIL condition DO TICKTOK identifier RPAREN RPAREN statements END_LOOP'''
+	'''for : START_LOOP LPAREN SINCE condition UNTIL condition DO expr RPAREN statements END_LOOP'''
 	# print "for loop"
 
 def p_while(t):
@@ -338,7 +355,8 @@ def p_empty(p):
 
 def p_error(p):
 	print "Error dectected in line "+str(p.lineno)
-	exit()
+	if debug == 0:
+		exit()
 
 
 def startParse():
@@ -352,18 +370,22 @@ def startParse():
 
 	parser = yacc.yacc(debug=False)
 	parser.parse(data,tracking=True)
+	print "Working"
 
-	# toks = []
-	# tok1 =""
-	# lexer.input(data)
-	# while True:
-	#     tok = lexer.token()
-	#     if not tok: 
-	#         break      # No more input
-	#     toks.append(tok.value)
-	#     tok1 = tok1+tok.value
-	# print toks
-	# print tok1
+	if debug == 1:
+		toks = []
+		tok1 =""
+		lexer.input(data)
+		while True:
+		    tok = lexer.token()
+		    if not tok: 
+		        break      # No more input
+		    toks.append(tok.value)
+		    print tok
+		    tok1 = tok1+tok.value
+		print toks
+		print tok1
+
 	return True
 
 
