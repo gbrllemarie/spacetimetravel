@@ -4,9 +4,8 @@
     Simple addition using functions
 -- %%
 
-activate :present: with (numeral :x:) returns numeral
+activate :present: with (numeral :x:) returns vacuum
     :x: <- :x: + 2
-    transmit :x:
 deactivate :present:
 
 

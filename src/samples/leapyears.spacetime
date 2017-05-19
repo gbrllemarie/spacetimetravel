@@ -4,22 +4,41 @@
     Outputs all leap years between two given inputs.
 -- %%
 
+%% -- helper functions -- %%
+
+activate :isLeap: with (numeral :year:) returns day
+    day :out:
+    %% :out: <- darkness %%
+
+    %% check if leap year %%
+    start check (:year: mod 4 ?= 0 ?& :year: mod 100 ?!= 0 ?| :year: mod 400 ?= 0)
+        %% it's a leap year, print :year: %%
+       display :year: %% TODO: i/o syntax %%
+    end check
+
+    transmit :out:
+deactivate :isLeap:
+
 %% -- main sequence -- %%
 ALPHA :time:
     %% -- declare variables -- %%
-    numeral :start: <1600>
-    numeral :end:   <2100>
-    %% TODO: i/o
+    numeral :start:
+    :start: <- 1600
+    numeral :end:
+    :end: <- 2100
+    %% TODO: i/o %%
 
     %% -- loop through each number between start and end -- %%
-    start loop (since :year: <- :start: until :year: ?= :end: do tick(:year:))
+    start loop (since :year: <- :start: + 1 until :year: ?= :end: do :year: <- :year: + 1)
         %% --
             crude checking of leap year (divisibility by 4),
             must check if the year is centurial and is divisible by 400
         -- %%
-        start check (:year: % 4 ?= 0)
+        day :leap:
+        :leap: <- warp(:isLeap:)(:year:)
+        start check (:leap:)
             %% it's a leap year, print :year: %%
-            print(:year:) %% TODO: i/o syntax
+            display :year: %% TODO: i/o syntax %%
         end check
     end loop
 OMEGA :time:
