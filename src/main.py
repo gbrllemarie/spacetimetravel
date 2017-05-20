@@ -101,6 +101,7 @@ lex_vars = [
     ( vardec_token,             "syntax_vardec"     ), # variable declaration
     ( identifier + Str("<-"),   "syntax_varassign"  ), # variable assignment
     ( identifier + Str("<-") + anyString, "syntax_varassign_string"),
+    #( identifier + Str("<-") + (Str("light")|Str("darkness")))
 ]
 
 # main function
