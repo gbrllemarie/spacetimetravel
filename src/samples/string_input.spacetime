@@ -1,6 +1,12 @@
-ALPHA :time:
+ALPHA :time:  
+	display "Hello amazing"
 	constellation :str:<15>
+	constellation :str2:<15>
+	numeral :samp:
+	:samp: <- 3
 	:str: <- "hello"
-	%% receive :str: %%
+	:str2: <- "hello2"
+	%% receive str %%
 	display :str:
+	displayln :samp:
 OMEGA :time:
