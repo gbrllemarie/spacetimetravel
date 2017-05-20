@@ -1,0 +1,36 @@
+activate :pascal: with (numeral :a:, numeral :b:) returns numeral
+	numeral :ret:
+	start check (:b: ?= 0 ?| :a: ?= :b:)
+		:ret: <- 1
+	retreat
+		numeral :ret1:
+		numeral :ret2:
+		numeral :c:
+		numeral :d:
+		:c: <- :a: - 1
+		:d: <- :b: - 1
+		:ret1: <- warp(:pascal:)(:c:,:b:)
+		:ret2: <- warp(:pascal:)(:c:,:d:)
+		:ret: <- :ret1: + :ret2:
+	end check
+
+	transmit :ret:
+
+deactivate :pascal:
+
+ALPHA :time:
+	numeral :x:
+	receive :x:
+	numeral :i:
+	numeral :j:
+	start loop (since :i: <- 0 until :i: ?< :x: do tick(:i:))
+		start loop (since :j: <- 0 until :j: ?<= :i: do tick(:j:))
+			numeral :res:
+			:res: <- warp(:pascal:)(:i:, :j:)
+			display :res:
+		end loop
+		constellation :str:<15>
+		:str: <- " "
+		displayln :str:
+	end loop
+OMEGA :time:
