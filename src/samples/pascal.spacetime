@@ -1,6 +1,6 @@
 activate :pascal: with (numeral :a:, numeral :b:) returns numeral
 	numeral :ret:
-	start check (:b: ?= 0 ?| a ?= b)
+	start check (:b: ?= 0 ?| :a: ?= :b:)
 		:ret: <- 1
 	retreat
 		numeral :ret1:

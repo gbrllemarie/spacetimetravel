@@ -114,10 +114,7 @@ lex_mainfn = [
 fncall_token = (Str("warp(")
               + identifier
               + Str(")(")
-              + Opt(Alt(number, identifier)
-                      + Rep(Str(",") + Rep(wspace + (number|identifier) + wspace)
-                      )
-               )+Str(")")+Eol)
+              + Rep(AnyBut("\n"))+Str(")")+Eol)
 fnhead_token = Str("activate")+identifier+Str("with (")+ wspace+Opt(dtype+Alt(number, identifier)
             + Rep(Str(",") + wspace+dtype+wspace + (number|identifier) + wspace)
             ) + Str(")") + wspace + Opt(Str("returns")+wspace+dtype)
@@ -367,8 +364,7 @@ def translateFncall(token):
         raw_args = tok[2].split(',')
         for i in range(len(raw_args)):
             raw_args[i] = raw_args[i].strip(' ')
-            if raw_args[i][0] == ':' and raw_args[i][-1] == ':':
-                raw_args[i] = raw_args[i][1:-1]
+            raw_args[i] = raw_args[i].replace(':', '')
         args = ",".join(raw_args)
     print tok[1][1:-1]+"("+args+");",
     print "/** function call to "+tok[1][1:-1]+" **/"

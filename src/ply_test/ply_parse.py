@@ -310,10 +310,10 @@ def p_condition(t):
 				| intnum'''
 	# print "condition ok"
 
-def p_relation(t):
-	'''relation : RELATIONAL
-				| RELATIONALBIT'''
-	# print "relation ok"
+# def p_relation(t):
+# 	'''relation : RELATIONAL
+# 				| RELATIONALBIT'''
+# 	# print "relation ok"
 
 def p_loops(t):
 	'''loops : while
@@ -348,7 +348,7 @@ def p_warp(p):
 
 def p_warpargs(p):
 	'''warpargs : expr
-				| expr COMMA expr
+				| expr COMMA warpargs
 				| empty'''
 
 def p_empty(p):
