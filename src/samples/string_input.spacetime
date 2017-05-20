@@ -1,4 +1,6 @@
 ALPHA :time:
 	constellation :str:<15>
-	receive :str:
+	:str: <- "hello"
+	%% receive :str: %%
+	display :str:
 OMEGA :time:
