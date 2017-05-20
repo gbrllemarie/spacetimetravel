@@ -16,5 +16,5 @@ with open(c_file, 'r') as content_file:
 
 if 'Error' in data or 'error' in data:
 	print data[data.find('rror')-1:-1]
-	# os.remove(c_file)
+	os.remove(c_file)
 
