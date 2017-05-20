@@ -336,7 +336,7 @@ def translatePrintInput(token):
             format_code = "%s"
 
         printf = 'printf("'
-        c_print_string = printf + format_code + newline + ' ", ' + varname + ");"
+        c_print_string = printf + format_code + ' '+newline+'",' + varname + ");"
         
         return c_print_string
     except:
@@ -479,11 +479,11 @@ while 1:
 
     # -- constants   
     elif token[0] == "constant_void":
-        print "void",
+        print "void;",
     elif token[0] == "constant_true":
-        print "true",
+        print "true;",
     elif token[0] == "constant_false":
-        print "false",
+        print "false;",
 
     # -- syntax
     elif token[0] == "syntax_for":
@@ -520,7 +520,7 @@ while 1:
     elif token[0] == 'syntax_varassign_string':
         print translateAssignString(token[1])
     elif token[0] == 'syntax_varassign':
-        print translateAssignVar(token[1])
+        print translateAssignVar(token[1]),
     
         #tok = token[1].replace(":","")
         #tok = tok.replace("<-"," =")
