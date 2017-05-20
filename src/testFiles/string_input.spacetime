@@ -1,0 +1,15 @@
+ALPHA :time:  
+	display "Hello amazing"
+	constellation :str:<15>
+	constellation :str2:<15>
+	numeral :samp:
+	:samp: <- 1
+	:str: <- "hello"
+	:str2: <- "hello2"
+	%% receive str %%
+	display :str:
+	start cycle (until :samp: ?< 10)
+		displayln :samp:
+		tick(:samp:)
+	end cycle
+OMEGA :time:
