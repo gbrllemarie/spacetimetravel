@@ -1,0 +1,5 @@
+ALPHA :time:
+	starz :samp: <- 'a'
+	numeral :seriesSample: <5>
+	:seriesSample: <- [1,2,3,4,5]
+OMEGA :time:

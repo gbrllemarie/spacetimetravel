@@ -1,0 +1,9 @@
+ALPHA :time:
+	constellation :str:<15>
+	displayln "Hello World!"
+	display "Enter your name: "
+	receive :str:
+	displayln ""
+	display "Hi "
+	display :str:
+OMEGA :time:

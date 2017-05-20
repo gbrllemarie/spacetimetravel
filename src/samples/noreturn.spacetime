@@ -1,0 +1,11 @@
+activate :justOutput: with (numeral :number:) returns vacuum
+    start check (:number: ?= 3)
+    	display "It's three"
+    end check
+deactivate :justOutput:
+
+ALPHA :time:
+	numeral :num1:
+	:num1: <- 3
+	warp(:justOutput:)(:num1:)
+OMEGA :time:
