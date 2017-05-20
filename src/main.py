@@ -34,6 +34,7 @@ source_output = os.path.splitext(source_name)[0] + ".c"
 # -- Lexical Analysis ---------------------------------------------------------#
 
 # general matching for tokens
+quote       = '\"'
 wspace      = Rep(Any(" \t"))
 ident_strip = Range("AZaz") + Rep(Range("AZaz09"))
 identifier  = wspace + Str(":") + ident_strip + Str(":") + wspace
@@ -41,6 +42,7 @@ integer     = Rep1(Range("09"))
 number      = integer + (Str(".") + Rep1(Range("09")) | Empty)
 dtype       = Str("numeral")|Str("decimal")|Str("starz")|Str("constellation")|Str("day")|Str("vacuum")
 equality_operators = Str("?>") | Str("?<") | Str("?>=") | Str("?<=") | Str("?=") | Str("?!=")
+anyString = wspace +Str("\"") + Rep(AnyBut(quote)) + Str("\"") + wspace
 # check_token = wspace + Str("(")+ Rep(Range("AZaz09")) + wspace + equality_operators + wspace + Rep(Range("AZaz09")) + Str(")")
 
 # -- generate arrays for lexicon --------------------------#
@@ -60,6 +62,7 @@ lex_reserved = [
     ( Str("retreat"),           "syntax_else"       ), # else
     ( Str("receive") + identifier,           "syntax_scanf"       ), # scanf
     ( (Str("display")|Str("displayln")) + identifier,           "syntax_printf"       ), # printf
+    ( (Str("display")|Str("displayln")) + anyString,           "syntax_for_print"),    # equivalent printf("string");
       # helpers
     ( Str("tick") + lex_expr_paren_newline,              "helper_increment"  ), # ++
     ( Str("tock") + lex_expr_paren_newline,              "helper_decrement"  ), # --
@@ -91,8 +94,6 @@ lex_datatypes = [
     ( Str("constellation"),     "datatype_string"   ), # string (char[n]) datatype
     ( Str("day"),               "datatype_bool"     ), # bool datatype
 ]
-
-anyString = wspace+Str("\"") + Rep(AnyChar) + Str("\"") + wspace
 
 vardec_token = ( Str("numeral", "decimal", "starz", "day", "constellation")
                + wspace + identifier +Opt(Str("<")+integer+Str(">"))+ Eol )
@@ -217,7 +218,6 @@ lexicon = Lexicon(lex_tokens)
 # generate the scanner
 scanner = Scanner(lexicon, source, source_output)
 
-
 def getName(str1):
     return str1.replace(':', '')
 
@@ -305,6 +305,18 @@ def translateAssignString(token):
     tok = ""
     tok = "strcpy(" + varname + ",\"" + tok_new[1] + "\");"
     return tok
+
+def translatePrintString(token):
+    first_tok = token.split(' ')
+    tok_split = token.split('\"')
+    tok = tok_split[1]
+    printTok = "printf(\"" + tok
+    newline = r"\n"
+    if (first_tok[0] == 'display'):
+        printTok = "printf(\"" + tok + "\");"
+    else:
+        printTok = "printf(\"" + tok + newline + "\");"
+    return printTok
 
 def translatePrintInput(token):
     tok_split = token.split(':')
@@ -429,6 +441,9 @@ def translateWhileLoop(token):
     cond += "{"
     return cond
 
+
+
+
 # def trans
 
 # read through the source input until EOF
@@ -498,6 +513,8 @@ while 1:
         translateVardec(token[1])
     elif token[0] == 'syntax_scanf': 
         print translateScanInput(token[1])
+    elif token[0] == 'syntax_for_print': 
+        print translatePrintString(token[1])
     elif token[0] == 'syntax_printf': 
         print translatePrintInput(token[1])
     elif token[0] == 'syntax_varassign_string':
