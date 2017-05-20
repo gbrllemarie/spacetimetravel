@@ -1,0 +1,18 @@
+%% -- main sequence -- %%
+ALPHA :time:
+
+%% -- loop through each number between start and end -- %%
+    start loop (since :year: <- :start: + 1 until :year: ?= :end: do :year: <- :year: + 1)
+        %% --
+            crude checking of leap year (divisibility by 4),
+            must check if the year is centurial and is divisible by 400
+        -- %%
+        day :leap:
+        :leap: <- warp(:isLeap:)(:year:)
+        start check (:leap:)
+            %% it's a leap year, print :year: %%
+            display :year: %% TODO: i/o syntax %%
+        end check
+    end loop
+
+OMEGA :time:

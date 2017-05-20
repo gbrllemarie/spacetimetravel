@@ -2,10 +2,9 @@
 ALPHA :time:
 
     day :leap:
+    numeral :year:
     :leap: <- warp(:isLeap:)(:year:)
     start check (:leap: ?= 0)
-        %% it's a leap year, print :year: %%
-        display :year: %% TODO: i/o syntax %%
     end check
 
 OMEGA :time:

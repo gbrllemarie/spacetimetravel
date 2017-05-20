@@ -1,6 +1,6 @@
 %% -- main sequence -- %%
 ALPHA :time:
-
+numeral :year:
 start check (:year: mod 4 ?= 0 ?& :year: mod 100 ?!= 0 ?| :year: mod 400 ?= 0)
         %% it's a leap year, print :year: %%
        display :year: %% TODO: i/o syntax %%

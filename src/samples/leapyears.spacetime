@@ -9,7 +9,6 @@
 activate :isLeap: with (numeral :year:) returns day
     day :out:
     %% :out: <- darkness %%
-
     %% check if leap year %%
     start check (:year: mod 4 ?= 0 ?& :year: mod 100 ?!= 0 ?| :year: mod 400 ?= 0)
         %% it's a leap year, print :year: %%
@@ -26,8 +25,8 @@ ALPHA :time:
     :start: <- 1600
     numeral :end:
     :end: <- 2100
+    numeral :year:
     %% TODO: i/o %%
-
     %% -- loop through each number between start and end -- %%
     start loop (since :year: <- :start: + 1 until :year: ?= :end: do :year: <- :year: + 1)
         %% --

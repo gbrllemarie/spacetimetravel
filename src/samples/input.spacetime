@@ -4,7 +4,7 @@
     Simple addition using functions
 -- %%
 
-activate :present: with (numeral :x:) returns vacuum
+activate :present: with (numeral :x:) returns numeral
     :x: <- :x: + 2
 deactivate :present:
 
