@@ -20,16 +20,12 @@ import ply.yacc as yacc
 debug = 0
 fxn_stack = []
 fxn_list = []
-########## LIST OF STATES ##########################
-# states = (
-#    ('foo','exclusive'),
-#    ('bar','inclusive'),
-# )
+
 
 ########## LIST OF TOKENS ##########################
 tokens = ('COMMENTS',  )
 
-############ REGEX FOR TOKENS ######################
+####### REGEX FOR TOKENS ###########################
 wspace      	= r"[ \t]*"
 ident_strip 	= r"([A-Za-z][A-Za-z0-9]*)"
 ident 			= r"("+wspace+':'+ident_strip+':'+wspace+")"
@@ -44,7 +40,7 @@ t_GTHAN			= r'>'
 tok_atoms = ('identifier', 'intnum', 'floatnum',
 	'dtype','LTHAN', 'GTHAN', )
 
-##### TOKENS FOR SYMBOLS ####
+#### TOKENS FOR SYMBOLS ###
 t_DARKNESS		= r"(darkness)"
 t_LIGHT			= r"(light)"
 t_STRINGS		= r"(\"[^\"]*\")"
@@ -64,7 +60,7 @@ t_ASSIGN  = r"<-"
 tok_symbols = ('OPERATION', 'ASSIGN', 'LPAREN','RPAREN',
 	'RELATIONAL', 'RELATIONALBIT', 'MOD', 'COMMA', 'STRINGS', 'DARKNESS', 'LIGHT')
 
-##### TOKENS FOR FUNCTIONS ######
+####### TOKENS FOR FUNCTIONS #####################
 
 t_INITIAL_main_head = r"(ALPHA"+wspace+":time:)"
 t_INITIAL_main_foot = r"(OMEGA"+wspace+":time:)"
@@ -83,7 +79,7 @@ t_fxn_returnval = r"(transmit)"
 tok_fxn =  ('fxn_head', 'fxn_foot', 'fxn_returnval', 'FXNRETURN', 'FXNWITH',
 	'FXNWARP')
 
-####### TOKENS FOR STATEMENTS ###################
+####### TOKENS FOR STATEMENTS ######################
 ## TOKEN FOR LOOPS ##
 
 
@@ -100,7 +96,7 @@ tok_loops = ('START_CYCLE', 'END_CYCLE',
 	'START_LOOP', 'END_LOOP', 'UNTIL', 'SINCE', 'DO', 'TICKTOK')
 
 
-## TOKEN FOR IF-ELSE ##
+### TOKEN FOR IF-ELSE ###
 t_START_CHECK	= r"(start\ check)"
 t_END_CHECK		= r"(end\ check)"
 t_RECHECK		= r"(recheck)"
@@ -110,7 +106,7 @@ tok_ifelse	= ('START_CHECK', 'END_CHECK', 'RECHECK', 'RETREAT',)
 
 
 
-####### TOKENS FOR I/O #########################
+####### TOKENS FOR I/O #############################
 t_DISPLAY			= r"(display\ |displayln\ )"
 t_RECEIVE			= r"(receive\ )"
 
@@ -128,23 +124,15 @@ def t_newline(t):
     r'\n+'
     t.lexer.lineno += len(t.value)
 
-# def t_foo_newline(t):
-#     r'\n'
-#     t.lexer.lineno += 1
-# def t_bar_newline(t):
-#     r'\n'
-#     t.lexer.lineno += 1
 
 # A string containing ignored characters (spaces and tabs)
 t_ignore  = ' \t'
 
-# t_EMPTY = r''
-# tok_misc = ('EMPTY',)
 
 # Error handling rule
 def t_error(t):
-    print("Error in line %i" % (t.lineno))
-    # print(t.value)
+    print "Error in line %i" % (t.lineno)
+    print "Found these invalid character/s: ``%s''" % (t.value.split('\n')[0])
     t.lexer.skip(1)
     if debug == 0:
     	exit()
@@ -157,12 +145,13 @@ tokens += tok_mainfxn
 tokens += tok_fxn 
 tokens += tok_loops
 tokens += tok_ifelse
+# tokens += ('newline',)
 # tokens += tok_misc
 
 # print tokens
 
 
-############ YACC #############################
+############ YACC ##################################
 def p_program(t):
 	'program : comment fxns main'''
 
@@ -216,7 +205,7 @@ def p_fxnfooter(t):
 	pass
 
 def p_trans(p):
-	''' trans : fxn_returnval identifier
+	''' trans : fxn_returnval identifier var_dec_array
 				| fxn_returnval intnum
 				| fxn_returnval floatnum'''
 	# print "transmit"
@@ -243,26 +232,30 @@ def p_statemets(t):
 				| empty'''
 
 def p_inout(t):
-	'''inout : DISPLAY identifier
+	'''inout : DISPLAY identifier var_dec_array
 			| DISPLAY STRINGS
-			| RECEIVE identifier'''
+			| RECEIVE identifier var_dec_array'''
 	# print "I/O detected"
 
 # def p_identifier(t):
 # 	'''identifier : ident'''
 
 def p_var_dec(t):
-	'''var_dec : dtype identifier
-				| var_array'''
+	'''var_dec : dtype identifier var_dec_array'''
 	# print "var dec"
 
-def p_var_array(t):
-	'var_array : dtype identifier LTHAN intnum GTHAN'
+def p_var_dec_array(t):
+	'''var_dec_array : var_array
+				| empty'''
 	# print "var array"
+
+def p_var_array(t):
+	'''var_array : LTHAN intnum GTHAN
+				| LTHAN identifier GTHAN'''
 
 
 def p_var_assign(t):
-	'var_assign : identifier ASSIGN expr'
+	'var_assign : identifier var_dec_array ASSIGN expr'
 	# print "var assign"
 
 def p_bool_assign(t):
@@ -319,11 +312,6 @@ def p_condition(t):
 				| intnum'''
 	# print "condition ok"
 
-# def p_relation(t):
-# 	'''relation : RELATIONAL
-# 				| RELATIONALBIT'''
-# 	# print "relation ok"
-
 def p_loops(t):
 	'''loops : while
 			| for '''
@@ -373,9 +361,10 @@ def p_empty(p):
 
 def p_error(p):
 	if p:
-		print "Error dectected in line "+str(p.lineno)
+		print "Error detected in line "+str(p.lineno)
+		print "Invalid character/s found: ``"+str(p.value)+"''"
 	else:
-		print "Error dectected in EOF"
+		print "Error detected in EOF. ``OMEGA :time:'' must be the last line."
 	if debug == 0:
 		exit()
 
@@ -389,7 +378,7 @@ def startParse():
 	lexer = lexy.lex()
 	lexer.input(data)
 
-	parser = yacc.yacc(debug=False)
+	parser = yacc.yacc(debug=True)
 	parser.parse(data,tracking=True)
 	# print "Working"
 

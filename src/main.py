@@ -43,6 +43,7 @@ number      = integer + (Str(".") + Rep1(Range("09")) | Empty)
 dtype       = Str("numeral")|Str("decimal")|Str("starz")|Str("constellation")|Str("day")|Str("vacuum")
 equality_operators = Str("?>") | Str("?<") | Str("?>=") | Str("?<=") | Str("?=") | Str("?!=")
 anyString = wspace +Str("\"") + Rep(AnyBut(quote)) + Str("\"") + wspace
+array_index = Opt(Str("<")+(integer|identifier)+Str(">"))
 # check_token = wspace + Str("(")+ Rep(Range("AZaz09")) + wspace + equality_operators + wspace + Rep(Range("AZaz09")) + Str(")")
 
 # -- generate arrays for lexicon --------------------------#
@@ -60,8 +61,9 @@ lex_reserved = [
     ( Str("start check")+wspace+lex_expr_paren_newline,       "syntax_if"         ), # if
     ( Str("recheck")+wspace+lex_expr_paren_newline,           "syntax_elseif"     ), # else if
     ( Str("retreat"),           "syntax_else"       ), # else
-    ( Str("receive") + identifier,           "syntax_scanf"       ), # scanf
-    ( (Str("display")|Str("displayln")) + identifier,           "syntax_printf"       ), # printf
+    ( Str("receive") + identifier + array_index,           "syntax_scanf"       ), # scanf
+    ( (Str("display")|Str("displayln")) + identifier 
+    +  array_index,           "syntax_printf"       ), # printf
     ( (Str("display")|Str("displayln")) + anyString,           "syntax_for_print"),    # equivalent printf("string");
       # helpers
     ( Str("tick") + lex_expr_paren_newline,              "helper_increment"  ), # ++
@@ -99,8 +101,8 @@ vardec_token = ( Str("numeral", "decimal", "starz", "day", "constellation")
                + wspace + identifier +Opt(Str("<")+integer+Str(">"))+ Eol )
 lex_vars = [
     ( vardec_token,             "syntax_vardec"     ), # variable declaration
-    ( identifier + Str("<-"),   "syntax_varassign"  ), # variable assignment
-    ( identifier + Str("<-") + anyString, "syntax_varassign_string"),
+    ( identifier +Opt(Str("<")+(integer|identifier)+Str(">"))+wspace+ Str("<-"),   "syntax_varassign"  ), # variable assignment
+    ( identifier +wspace+ Str("<-") + anyString, "syntax_varassign_string"),
     #( identifier + Str("<-") + (Str("light")|Str("darkness")))
 ]
 
@@ -122,7 +124,7 @@ fnhead_token = Str("activate")+identifier+Str("with (")+ wspace+Opt(dtype+Alt(nu
             ) + Str(")") + wspace + Opt(Str("returns")+wspace+dtype)
 lex_fncall = [
     ( fncall_token,                         "helper_subprogram" ), # add functional calls
-    ( Str("transmit")+wspace+Alt(identifier|number),"helper_return" ), # add function return
+    ( Str("transmit")+wspace+Alt(identifier+array_index|number),"helper_return" ), # add function return
     ( fnhead_token,                         "helper_fnheader" ), # add function header
     ( Str("deactivate")+wspace+identifier,  "helper_fnfooter" ), # add function header
 ]
@@ -271,7 +273,7 @@ def typeof(variable):
 def translateScanInput(token):
     varname = token.split(':')[1].strip()
     format_code = ""
-
+    var_index = ""
     # print "varname: ", varname
     # print "typeof(varname): ", typeof(varname)
     
@@ -279,7 +281,7 @@ def translateScanInput(token):
         format_code = "%d"
         varname = "&" + varname
     elif typeof(varname) == "float":
-        format_code = "%lf"
+        format_code = "%f"
         varname = "&" + varname
     elif typeof(varname) == "char": 
         format_code = "%c"
@@ -287,25 +289,35 @@ def translateScanInput(token):
     elif typeof(varname) == "char-array": 
         format_code = "%s"
 
+    if len(filter(None,token.split(':'))) > 2:
+        var_index = ''.join(token.split(':')[2:]).strip('<>')
+        var_index = "["+var_index+"]"
+        varname = varname+ var_index
+
     scanf = 'scanf("'
     c_scan_string = scanf + format_code + '", ' + varname + ");"
     
     return c_scan_string
 
-# translates
-# str<- "hello" to trcopy
 def translateAssignVar(token):
     tok = token.replace(":","")
     tok = tok.replace("<-"," =")
+    tok = tok.replace("<", "[")
+    tok = tok.replace(">", "]")
     return tok
-
+# translates
+# str<- "hello" to trcopy
 def translateAssignString(token):
     tok_split = token.split(':')
     tok_new = token.split('"')
     varname = tok_split[1].strip()
-    tok = ""
-    tok = "strcpy(" + varname + ",\"" + tok_new[1] + "\");"
-    return tok
+    if typeof(varname) == "char-array":
+        tok = ""
+        tok = "strcpy(" + varname + ",\"" + tok_new[1] + "\");"
+        return tok
+    else:
+        print "Error :%s: is not a string in line %d" % (varname,linenum)
+        exit()
 
 def translatePrintString(token):
     first_tok = token.split(' ')
@@ -320,10 +332,14 @@ def translatePrintString(token):
     return printTok
 
 def translatePrintInput(token):
-    tok_split = token.split(':')
+    tok_split = filter(None,token.split(':'))
     varname = tok_split[1].strip()
     format_code = ""
     newline = ""
+    var_index = ""
+    if len(tok_split) > 2:
+        var_index = ''.join(tok_split[2:]).strip('<>')
+        var_index = "["+var_index+"]"
     if(tok_split[0].strip(' ') == 'displayln'):
         newline = "\\n"
     try:    
@@ -337,7 +353,7 @@ def translatePrintInput(token):
             format_code = "%s"
 
         printf = 'printf("'
-        c_print_string = printf + format_code + ' '+newline+'",' + varname + ");"
+        c_print_string = printf + format_code + ' '+newline+'",' + varname +var_index+ ");"
         
         return c_print_string
     except:
@@ -387,6 +403,8 @@ def translateFncall(token):
 def translateFnreturn(token):
     tok = token.split(' ')
     tok[1] = tok[1].replace(':', '')
+    tok[1] = tok[1].replace('<', '[')
+    tok[1] = tok[1].replace('>', ']')
     print "return "+tok[1]+";"
 
 def translateExprOp(token, end=1):

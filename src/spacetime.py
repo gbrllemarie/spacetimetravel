@@ -14,6 +14,7 @@ data = []
 with open(c_file, 'r') as content_file:
 	    data = content_file.read()
 
-if 'return 0;' not in data:
-	print data
-	os.remove(c_file)
+if 'Error' in data or 'error' in data:
+	print data[data.find('rror')-1:-1]
+	# os.remove(c_file)
+
