@@ -45,8 +45,8 @@ lex_reserved = [
     ( Str("light"),             "constant_true"     ), # true
     ( Str("darkness"),          "constant_false"    ), # false
       # syntax
-    ( Str("loop"),              "syntax_for"        ), # for loop
-    ( Str("cycle"),             "syntax_while"      ), # while loop
+    # ( Str("loop"),              "syntax_for"        ), # for loop
+    # ( Str("cycle"),             "syntax_while"      ), # while loop
     ( Str("start check")+wspace+lex_expr_paren_newline,       "syntax_if"         ), # if
     ( Str("recheck")+wspace+lex_expr_paren_newline,           "syntax_elseif"     ), # else if
     ( Str("retreat"),           "syntax_else"       ), # else
@@ -168,14 +168,14 @@ lex_error = [
 #    ( mainfn_end_token,         "block_mainfnend"   ),
 #]
 
-for_condition = Str ("since ") + Rep(AnyBut("")) + Str(" until ") + Rep(AnyBut("")) +Str(" do ") + Rep(AnyBut("\n"))
+for_condition = Str ("since ") + Rep(AnyBut("\n")) + Str(" until ") + Rep(AnyBut("\n")) +Str(" do ") + Rep(AnyBut("\n"))|(Str("tick(")|Str("tock(")+identifier+Str(")")) + Str(")\n")
 lex_for = [
    ( Str("start loop"), "syntax_for"),
    ( Str("end loop"), "syntax_for_end"),
    ( for_condition, "syntax_for_condition"),
 ]
 
-while_condition = Str ("(until") + Rep(AnyBut("")) + Str(")\n")
+while_condition = Str ("(until ") + Rep(AnyBut("\n")) + Str(")\n")
 lex_while = [
    ( Str("start cycle"), "syntax_while"),
    ( Str("end cycle"), "syntax_while_end"),
@@ -191,6 +191,7 @@ lex_tokens += lex_comments
 lex_tokens += lex_vars
 lex_tokens += lex_formatting
 lex_tokens += lex_for
+lex_tokens += lex_while
 # lex_tokens += lex_misc
 lex_tokens += lex_fncall
 lex_tokens += lex_error
@@ -337,6 +338,7 @@ def translateFncall(token):
     if(len(tok) > 2):
         raw_args = tok[2].split(',')
         for i in range(len(raw_args)):
+            raw_args[i] = raw_args[i].strip(' ')
             if raw_args[i][0] == ':' and raw_args[i][-1] == ':':
                 raw_args[i] = raw_args[i][1:-1]
         args = ",".join(raw_args)
@@ -360,19 +362,12 @@ def translateExprParen(token):
     strip_token = token[1:-1] #remove enclosing parentheses
     scan1 = Scanner(Lexicon(lex_paren), StringIO(strip_token), source_output)
     tok = scan1.read()
+    # print tok
     trans = "("
     if tok[0] == 'syntax_for_condition':
-        temp = tok[1].replace("since", "")
-        temp = temp.replace(" until", ";")
-        temp = temp.replace(" do", ";")
-        temp1 = temp.split(";")
-        for i in temp1:
-            trans += translateVarAssign(i) + "; "
-        trans = trans.strip("; ")
-        trans += ") {"
+        trans += translateForLoop(tok[1])
     else:
         temp = tok[1]
-
     return trans
 
 def translateVarAssign(token):
@@ -388,22 +383,35 @@ def translateVarAssign(token):
 
 def translateIfElseIfElseClause(spacetime_syntax, c_syntax, token):
     c_if_syntax = token.replace(spacetime_syntax, c_syntax)
-    c_if_syntax = c_if_syntax.replace("mod", "%")
-    c_if_syntax = c_if_syntax.replace("?=", "==")
-    c_if_syntax = c_if_syntax.replace("?|", "||")
-    c_if_syntax = c_if_syntax.replace("?&", "&&")
-    c_if_syntax = c_if_syntax.replace("?", "")
-    c_if_syntax = c_if_syntax.replace("<-", "=")
-    c_if_syntax = c_if_syntax.replace(":", "")
+    c_if_syntax = translateVarAssign(c_if_syntax)
     c_if_syntax = c_if_syntax + "{"
     return c_if_syntax
+
+def translateForLoop(token):
+    trans = ""
+    temp = token.replace("since", "")
+    temp = temp.replace(" until", ";")
+    temp = temp.replace(" do", ";")
+    temp1 = temp.split(";")
+    for i in temp1:
+        trans += translateVarAssign(i) + "; "
+    trans = trans.strip("; ")
+    trans += ") {"
+    return trans
+
+def translateWhileLoop(token):
+    cond = token.replace('until', '')
+    cond = translateVarAssign(cond)
+    cond += "{"
+    return cond
 
 # def trans
 
 # read through the source input until EOF
 linenum = 1
 preprocess = "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n"
-preprocess += "#define darkness false\n #define light true"
+preprocess += "\n#define darkness false \n#define light true"
+preprocess += "\n#define tick(x) x++ \n#define tock(x) x--"
 print preprocess
 while 1:
     token = scanner.read()
@@ -442,17 +450,22 @@ while 1:
     elif token[0] == "syntax_for":
         print "for",
     elif token[0] == "syntax_for_condition":
-        pass
+        print translateForLoop(token[1])
     elif token[0] == "syntax_for_end":
         print "}"
     elif token[0] == "syntax_while":
         print "while",
+    elif token[0] == "syntax_while_end":
+        print "}",
+    elif token[0] == "syntax_while_condition":
+        print translateWhileLoop(token[1])
+
     elif token[0] == "syntax_if":
         print translateIfElseIfElseClause("start check", "if", token[1])
     elif token[0] == "syntax_elseif":
-        print translateIfElseIfElseClause("recheck", "else if", token[1])
+        print translateIfElseIfElseClause("recheck", "}\nelse if", token[1])
     elif token[0] == "syntax_else":
-        print translateIfElseIfElseClause("retreat", "else", token[1])
+        print translateIfElseIfElseClause("retreat", "}\nelse", token[1])
     elif token[0] == "block_end_if":
         print "}"
     elif token[0] == "syntax_comment":
