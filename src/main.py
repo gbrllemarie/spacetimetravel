@@ -101,6 +101,7 @@ lex_vars = [
     ( vardec_token,             "syntax_vardec"     ), # variable declaration
     ( identifier + Str("<-"),   "syntax_varassign"  ), # variable assignment
     ( identifier + Str("<-") + anyString, "syntax_varassign_string"),
+    #( identifier + Str("<-") + (Str("light")|Str("darkness")))
 ]
 
 # main function
@@ -481,9 +482,9 @@ while 1:
     elif token[0] == "constant_void":
         print "void",
     elif token[0] == "constant_true":
-        print "true",
+        print "true;",
     elif token[0] == "constant_false":
-        print "false",
+        print "false;",
 
     # -- syntax
     elif token[0] == "syntax_for":
