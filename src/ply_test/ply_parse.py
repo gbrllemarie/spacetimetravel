@@ -37,14 +37,16 @@ t_identifier 	= r"("+wspace+ident+wspace+")"
 integer			= r'[0-9]+'
 t_intnum		= integer
 t_floatnum		= r'('+integer+'\.'+integer+')'
-t_dtype			= r"numeral|decimal|constellation|day|vacuum|starz" 
+t_dtype			= r"numeral|decimal|constellation|vacuum|starz|day" 
 t_LTHAN			= r'<'
 t_GTHAN			= r'>'
 
 tok_atoms = ('identifier', 'intnum', 'floatnum',
-	'dtype','LTHAN', 'GTHAN')
+	'dtype','LTHAN', 'GTHAN', )
 
 ##### TOKENS FOR SYMBOLS ####
+t_DARKNESS		= r"(darkness)"
+t_LIGHT			= r"(light)"
 t_STRINGS		= r"(\"[^\"]*\")"
 t_LPAREN  		= r'\('
 t_RPAREN  		= r'\)'
@@ -60,7 +62,7 @@ t_COMMA			= r','
 t_ASSIGN  = r"<-"
 
 tok_symbols = ('OPERATION', 'ASSIGN', 'LPAREN','RPAREN',
-	'RELATIONAL', 'RELATIONALBIT', 'MOD', 'COMMA', 'STRINGS')
+	'RELATIONAL', 'RELATIONALBIT', 'MOD', 'COMMA', 'STRINGS', 'DARKNESS', 'LIGHT')
 
 ##### TOKENS FOR FUNCTIONS ######
 
@@ -242,6 +244,7 @@ def p_statemets(t):
 
 def p_inout(t):
 	'''inout : DISPLAY identifier
+			| DISPLAY STRINGS
 			| RECEIVE identifier'''
 	# print "I/O detected"
 
@@ -262,6 +265,10 @@ def p_var_assign(t):
 	'var_assign : identifier ASSIGN expr'
 	# print "var assign"
 
+def p_bool_assign(t):
+	''' bool_assign : DARKNESS
+				| LIGHT'''
+
 def p_comment(t):
 	'''comment : COMMENTS comment
 				| empty '''
@@ -277,6 +284,7 @@ def p_expr(t):
     		| warp
     		| ticktock
     		| STRINGS
+    		| bool_assign
     		| var_assign'''
 
     # print "int main(void){"
@@ -293,6 +301,7 @@ def p_expr2(t):
     		| floatnum
     		| warp
     		| ticktock
+    		| bool_assign
     		| identifier'''
     # print "int main(void){"
     # print "return 0;\n}"
