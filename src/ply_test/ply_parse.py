@@ -353,6 +353,13 @@ def p_default(t):
 
 def p_warp(p):
 	'''warp : FXNWARP LPAREN identifier RPAREN LPAREN warpargs RPAREN'''
+	# fname = p[3].strip(' ').replace(':', '')
+	# print fname+"----"
+	# if fxn_stack[-1] != 
+	# 	print "ERROR: Function names do not match ''"+t[2]+"'' in line "+str(t.lineno(2))
+	# 	exit()
+	# fxn_stack.pop()
+	# pass
 	# print "warp"
 
 def p_warpargs(p):
@@ -365,7 +372,10 @@ def p_empty(p):
     pass
 
 def p_error(p):
-	print "Error dectected in line "+str(p.lineno)
+	if p:
+		print "Error dectected in line "+str(p.lineno)
+	else:
+		print "Error dectected in EOF"
 	if debug == 0:
 		exit()
 
