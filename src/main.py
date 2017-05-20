@@ -5,6 +5,14 @@ from plex.traditional import re as rex
 import re as regex
 from StringIO import *
 
+
+import ply_test.ply_parse as ply
+
+status = ply.startParse()
+
+if status != True:
+    exit()
+
 # -- File Input Validation ----------------------------------------------------#
 # validate argument count
 if len(sys.argv) != 2:
@@ -319,7 +327,7 @@ def translatePrintInput(token):
             format_code = "%s"
 
         printf = 'printf("'
-        c_print_string = printf + format_code + newline + '", ' + varname + ");"
+        c_print_string = printf + format_code + newline + ' ", ' + varname + ");"
         
         return c_print_string
     except:
