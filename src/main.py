@@ -84,11 +84,14 @@ lex_datatypes = [
     ( Str("day"),               "datatype_bool"     ), # bool datatype
 ]
 
+anyString = wspace+Str("\"") + Rep(AnyChar) + Str("\"") + wspace
+
 vardec_token = ( Str("numeral", "decimal", "starz", "day", "constellation")
                + wspace + identifier +Opt(Str("<")+integer+Str(">"))+ Eol )
 lex_vars = [
     ( vardec_token,             "syntax_vardec"     ), # variable declaration
     ( identifier + Str("<-"),   "syntax_varassign"  ), # variable assignment
+    ( identifier + Str("<-") + anyString, "syntax_varassign_string"),
 ]
 
 # main function
@@ -132,6 +135,8 @@ comments_token = Str("%%") + Rep(AnyBut("%%")) + Str("%%")
 lex_comments = [
     ( comments_token,           "syntax_comment"    ), # add comments to lexicon
 ]
+
+
 
 # fns_token = Str("activate") + Rep(AnyBut("%%")) + Str("deactivate")
 # lex_comments = [
@@ -279,6 +284,21 @@ def translateScanInput(token):
     c_scan_string = scanf + format_code + '", ' + varname + ");"
     
     return c_scan_string
+
+# translates
+# str<- "hello" to trcopy
+def translateAssignVar(token):
+    tok = token.replace(":","")
+    tok = tok.replace("<-"," =")
+    return tok
+
+def translateAssignString(token):
+    tok_split = token.split(':')
+    tok_new = token.split('"')
+    varname = tok_split[1].strip()
+    tok = ""
+    tok = "strcpy(" + varname + ",\"" + tok_new[1] + "\");"
+    return tok
 
 def translatePrintInput(token):
     tok_split = token.split(':')
@@ -463,10 +483,14 @@ while 1:
         print translateScanInput(token[1])
     elif token[0] == 'syntax_printf': 
         print translatePrintInput(token[1])
+    elif token[0] == 'syntax_varassign_string':
+        print translateAssignString(token[1])
     elif token[0] == 'syntax_varassign':
-        tok = token[1].replace(":","")
-        tok = tok.replace("<-"," =")
-        print tok,
+        print translateAssignVar(token[1])
+    
+        #tok = token[1].replace(":","")
+        #tok = tok.replace("<-"," =")
+        #print tok,
 
     # -- helpers
     elif token[0] == "helper_increment":
