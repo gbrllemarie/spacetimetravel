@@ -6,6 +6,10 @@
 # TODO: this entire thing (not important)
 import os, sys
 
+if len(sys.argv) != 3:
+	print("Invalid arguments. Please follow the format:")
+	print("python spacetime.py <inputfile> <outputfile>")
+	exit()
 raw_file = sys.argv[1]
 c_file = sys.argv[2]
 os.system('python main.py '+raw_file+'> '+c_file)
