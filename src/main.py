@@ -400,7 +400,7 @@ def translatePrintInput(token):
         
         return c_print_string
     except:
-        print "\nERROR: Variable "+varname+" has no datatype or has not been declared"
+        print "\nError: Variable "+varname+" has no datatype or has not been declared"
         exit()
 
 def increment_or_decrement(token, incr_decr_concat):
