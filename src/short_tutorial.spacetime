@@ -1,0 +1,29 @@
+activate :computeArea: with (numeral :width:, numeral :length:) returns numeral
+    numeral :area:
+    :area: <- :length: * :width:
+    transmit :area:
+deactivate :computeArea:
+
+activate :computePerimeter: with (numeral :width:, numeral :length:) returns vacuum
+    numeral :perimeter:
+    :perimeter: <- (2 * (:width: + :length:))
+    display "\nPerimeter is "
+    display :perimeter:
+deactivate :computePerimeter:
+
+ALPHA :time:
+	displayln "A short tutorial"
+	numeral :length:
+	numeral :width:
+	display "Enter length: "
+	receive :length:
+	display "Enter width: "
+	receive :width:
+	warp(:computePerimeter:)(:width:,:length:)
+
+	numeral :area:
+	:area: <- warp(:computeArea:)(:width:, :length:)
+    display "\nArea is "
+    display :area:
+
+OMEGA :time:

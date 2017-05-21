@@ -573,7 +573,7 @@ while 1:
     elif token[0] == 'syntax_varassign_string':
         print translateAssignString(token[1])
     elif token[0] == 'syntax_varassign':
-        print translateAssignVar(token[1])
+        print translateAssignVar(token[1]),
     elif token[0] == 'syntax_varassign_array':
         print translateAssignVar2(token[1])
     elif token[0] == 'syntax_varassign_array2':
