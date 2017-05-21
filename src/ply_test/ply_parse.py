@@ -145,7 +145,7 @@ tokens += tok_mainfxn
 tokens += tok_fxn 
 tokens += tok_loops
 tokens += tok_ifelse
-tokens += ('newline',)
+# tokens += ('newline',)
 # tokens += tok_misc
 
 # print tokens
@@ -220,7 +220,7 @@ def p_main(t):
     # print "MAIN OK"
 
 def p_statemets(t):
-	'''statements : expr newline statements
+	'''statements : expr statements
 				| var_dec statements
 				| var_assign statements
 				| comment statements
