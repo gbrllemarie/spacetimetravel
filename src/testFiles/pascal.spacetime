@@ -1,3 +1,11 @@
+%% --
+	A spacetime code printing n rows of 
+	the pascal's triangle
+-- %% 
+
+%%
+	A recursive pascal function returning an integer
+%%
 activate :pascal: with (numeral :a:, numeral :b:) returns numeral
 	numeral :ret:
 	start check (:b: ?= 0 ?| :a: ?= :b:)
@@ -14,6 +22,7 @@ activate :pascal: with (numeral :a:, numeral :b:) returns numeral
 		:ret: <- :ret1: + :ret2:
 	end check
 
+	%% returning number to main time capsule function %%
 	transmit :ret:
 
 deactivate :pascal:

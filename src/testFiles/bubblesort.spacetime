@@ -1,3 +1,10 @@
+%% --
+	A spacetime code that implements
+	bubble sort
+
+	Array containing integers is hardcoded
+-- %%
+
 ALPHA :time:
 	display "Sorted numbers:"
 	numeral :array:<7>
@@ -12,6 +19,10 @@ ALPHA :time:
 	:array:<4> <- 13
 	:array:<5> <- 4
 	:array:<6> <- 6
+
+	%% a loop (note that tick(x) means incrementing by one ) 
+		sorting the array 
+	%%
  	start loop (since :ctr1: <- 0 until :ctr1: ?< (:max:-1) do tick(:ctr1:))
  		start loop (since :ctr2: <- 0 until :ctr2: ?< :max:-:ctr1:-1 do tick(:ctr2:))
  			numeral :tempVar:
@@ -25,6 +36,9 @@ ALPHA :time:
  		end loop
  	end loop
 
+ 	%%
+ 		a loop printing the contents of the array
+ 	%%
  	start loop (since :ctr1: <- 0 until :ctr1: ?< :max: do tick(:ctr1:))
  		display :array:<:ctr1:>
  	end loop
