@@ -19,6 +19,7 @@ activate :pascal: with (numeral :a:, numeral :b:) returns numeral
 deactivate :pascal:
 
 ALPHA :time:
+	display "Enter maximum number of rows: "
 	numeral :x:
 	receive :x:
 	numeral :i:
