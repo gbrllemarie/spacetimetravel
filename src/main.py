@@ -257,9 +257,9 @@ def translateVardec(token):
     varname = token.split(':')[1]
     addVarDataType(token)
 
-    temp = filter(None,token.split(':'))
+    temp = filter(None,token.strip(' ').split(':'))
     if(len(temp) > 2):
-        print "["+temp[2][1:-1]+"]",
+        print "["+temp[2].strip('<>')+"]",
     print ";",
     return
 
@@ -614,4 +614,3 @@ while 1:
         print token
         print "syntax error on line "+str(linenum)
         break
-
