@@ -97,12 +97,15 @@ lex_datatypes = [
     ( Str("day"),               "datatype_bool"     ), # bool datatype
 ]
 
+array_element = wspace + identifier + (Str("<")+(integer|identifier)+Str(">")) + wspace
 vardec_token = ( Str("numeral", "decimal", "starz", "day", "constellation")
                + wspace + identifier +Opt(Str("<")+integer+Str(">"))+ Eol )
 lex_vars = [
     ( vardec_token,             "syntax_vardec"     ), # variable declaration
     ( identifier +Opt(Str("<")+(integer|identifier)+Str(">"))+wspace+ Str("<-"),   "syntax_varassign"  ), # variable assignment
     ( identifier +wspace+ Str("<-") + anyString, "syntax_varassign_string"),
+    ( identifier +wspace + Str("<-") + array_element, "syntax_varassign_array"),
+    ( array_element +wspace + Str("<-") + array_element, "syntax_varassign_array2"),
     #( identifier + Str("<-") + (Str("light")|Str("darkness")))
 ]
 
@@ -299,6 +302,13 @@ def translateScanInput(token):
     
     return c_scan_string
 
+def translateAssignVar2(token):
+    tok = token.replace(":","")
+    tok = tok.replace("<-"," =")
+    tok = tok.replace("<", "[")
+    tok = tok.replace(">", "]")
+    return tok + ";"
+
 def translateAssignVar(token):
     tok = token.replace(":","")
     tok = tok.replace("<-"," =")
@@ -440,7 +450,25 @@ def translateIfElseIfElseClause(spacetime_syntax, c_syntax, token):
     c_if_syntax = token.replace(spacetime_syntax, c_syntax)
     c_if_syntax = translateVarAssign(c_if_syntax)
     c_if_syntax = c_if_syntax + "{"
-    return c_if_syntax
+    #c_if_syntax = c_if_syntax.replace("<", "[")
+    #c_if_syntax = c_if_syntax.replace(">", "]")
+    tok_split = c_if_syntax.split(' ')
+    curr = 0
+    for x in tok_split:
+        #print "len!!"
+        #print len(x)
+        if len(x) > 2:
+            tok_split[curr] = tok_split[curr].replace("<","[")
+            tok_split[curr] = tok_split[curr].replace(">", "]")
+        curr = curr + 1
+
+    token_fin = ""
+    for x in tok_split:
+        token_fin += x + " "
+    #print "ANNYEONG LOOOK HRE"
+    #print token_fin
+    #print " ANNYEONG"
+    return token_fin
 
 def translateForLoop(token):
     trans = ""
@@ -539,7 +567,11 @@ while 1:
     elif token[0] == 'syntax_varassign_string':
         print translateAssignString(token[1])
     elif token[0] == 'syntax_varassign':
-        print translateAssignVar(token[1]),
+        print translateAssignVar(token[1])
+    elif token[0] == 'syntax_varassign_array':
+        print translateAssignVar2(token[1])
+    elif token[0] == 'syntax_varassign_array2':
+        print translateAssignVar2(token[1])
     
         #tok = token[1].replace(":","")
         #tok = tok.replace("<-"," =")

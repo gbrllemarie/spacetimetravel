@@ -6,4 +6,25 @@ ALPHA :time:
 	displayln ""
 	display "Hi "
 	display :str:
+
+	numeral :temp:
+	numeral :temp2:
+	:temp2: <- 5
+	:temp: <- :temp2:
+	display "displaying temp"
+	displayln :temp:
+
+	numeral :array:<7>
+	numeral :ctr2:
+	:ctr2: <- 0
+	:array:<0> <- 312
+	:array:<1> <- 23
+	:array:<2> <- 1
+	:array:<3> <- 7
+	:array:<4> <- 13
+	:array:<5> <- 4
+	:array:<6> <- 6
+	:temp: <- :array:<:ctr2:>
+	display "displaying temp again"
+	display :temp:
 OMEGA :time:
