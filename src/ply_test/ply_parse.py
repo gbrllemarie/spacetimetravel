@@ -273,7 +273,7 @@ def p_expr(t):
     		| expr MOD expr
     		| intnum
     		| floatnum
-    		| identifier
+    		| identifier var_dec_array
     		| warp
     		| ticktock
     		| STRINGS
@@ -295,7 +295,7 @@ def p_expr2(t):
     		| warp
     		| ticktock
     		| bool_assign
-    		| identifier'''
+    		| identifier var_dec_array'''
     # print "int main(void){"
     # print "return 0;\n}"
     # print t[-1]
@@ -378,7 +378,7 @@ def startParse():
 	lexer = lexy.lex()
 	lexer.input(data)
 
-	parser = yacc.yacc(debug=True)
+	parser = yacc.yacc(debug=False)
 	parser.parse(data,tracking=True)
 	# print "Working"
 
