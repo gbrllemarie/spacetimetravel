@@ -417,23 +417,29 @@ def translateFnreturn(token):
     tok[1] = tok[1].replace('>', ']')
     print "return "+tok[1]+";"
 
-def translateExprOp(token, end=1):
+def translateExprOp(token):#, end=1):
+    #print "HELLO!!"
     token = token.replace(":","")
-    if end == 1:
-        token = token+";"
+    #if end == 1:
+    token = token+";"
     return token
 
 def translateExprParen(token):
     strip_token = token[1:-1] #remove enclosing parentheses
     scan1 = Scanner(Lexicon(lex_paren), StringIO(strip_token), source_output)
     tok = scan1.read()
-    # print tok
+    #print "hey"
+    #print token
+    #print "hey"
     trans = "("
     if tok[0] == 'syntax_for_condition':
         trans += translateForLoop(tok[1])
+        return trans
     else:
-        temp = tok[1]
-    return trans
+        token = token.replace(':', '')
+        token = token.replace('<', '[')
+        token = token.replace('>', ']')
+        return token + ';'
 
 def translateVarAssign(token):
     temp = token.replace("?=", "==")
