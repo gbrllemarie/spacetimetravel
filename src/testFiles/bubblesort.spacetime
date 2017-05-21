@@ -1,5 +1,5 @@
 ALPHA :time:
-	display "hello"
+	display "Sorted numbers:"
 	numeral :array:<7>
 	numeral :ctr1:
 	numeral :ctr2:

@@ -100,10 +100,13 @@ lex_datatypes = [
 array_element = wspace + identifier + (Str("<")+(integer|identifier)+Str(">")) + wspace
 vardec_token = ( Str("numeral", "decimal", "starz", "day", "constellation")
                + wspace + identifier +Opt(Str("<")+integer+Str(">"))+ Eol )
+any_but_n = Rep1(AnyBut('\"\n'))
+
 lex_vars = [
-    ( vardec_token,             "syntax_vardec"     ), # variable declaration
-    ( identifier +Opt(Str("<")+(integer|identifier)+Str(">"))+wspace+ Str("<-"),   "syntax_varassign"  ), # variable assignment
     ( identifier +wspace+ Str("<-") + anyString, "syntax_varassign_string"),
+    ( vardec_token,             "syntax_vardec"     ), # variable declaration
+    ( identifier +Opt(Str("<")+(integer|identifier)+Str(">"))+wspace+ Str("<-") + any_but_n,   "syntax_varassign"  ), # variable assignment
+    
     ( identifier +wspace + Str("<-") + array_element, "syntax_varassign_array"),
     ( array_element +wspace + Str("<-") + array_element, "syntax_varassign_array2"),
     #( identifier + Str("<-") + (Str("light")|Str("darkness")))
@@ -310,11 +313,41 @@ def translateAssignVar2(token):
     return tok + ";"
 
 def translateAssignVar(token):
-    tok = token.replace(":","")
+    tok_split = token.split(' ')
+    curr = 0
+    warp_num = -1
+    for x in tok_split:
+        #print x
+        #print len(x)
+        if len(x) > 7:
+            x = x[:4]
+            #print x
+            if x == "warp":
+                warp_num = curr
+        curr = curr + 1
+                
+    
+    tok = token
+    warp_fin = ""
+    if warp_num > 0:
+        tok = ' '.join(tok_split[:warp_num])
+        tok2 = ' '.join(tok_split[warp_num:])
+        warp_fin = translateFncall(tok2)
+    #my_list = ["Hello", "world"]
+    #print "-".join(my_list)
+    # Produce: "Hello-world"
+    tok = tok.replace(":","")
     tok = tok.replace("<-"," =")
     tok = tok.replace("<", "[")
     tok = tok.replace(">", "]")
-    return tok
+    #print "HERE"
+    #print tok
+    #print "HERE"
+    if warp_num > 0:
+        new_fin = tok + warp_fin
+        return new_fin
+    else:
+        return tok + ';'
 # translates
 # str<- "hello" to trcopy
 def translateAssignString(token):
@@ -405,9 +438,10 @@ def translateFncall(token):
             raw_args[i] = raw_args[i].strip(' ')
             raw_args[i] = raw_args[i].replace(':', '')
         args = ",".join(raw_args)
-    print tok[1][1:-1]+"("+args+");",
-    print "/** function call to "+tok[1][1:-1]+" **/"
-    return
+    new_tok = ""
+    new_tok = tok[1][1:-1]+"("+args+");\n"
+    new_tok = new_tok + "/** function call to "+tok[1][1:-1]+" **/"
+    return new_tok
 
 
 def translateFnreturn(token):
@@ -552,6 +586,24 @@ while 1:
     elif token[0] == "syntax_while_condition":
         print translateWhileLoop(token[1])
 
+    # -- helpers
+    elif token[0] == "helper_increment":
+        c_output = increment_or_decrement(token[1], "++")
+        print c_output
+    elif token[0] == "helper_decrement":
+        c_output = increment_or_decrement(token[1], "--")
+        print c_output
+    elif token[0] == "helper_typecast":
+        print "(typecast here)",                       # TODO
+    elif token[0] == "helper_subprogram":
+        print translateFncall(token[1])
+    elif token[0] == "helper_return":
+        translateFnreturn(token[1])
+    elif token[0] == "helper_fnheader":
+        translateFnheader(token[1])
+    elif token[0] == "helper_fnfooter":
+        print "}"
+
     elif token[0] == "syntax_if":
         print translateIfElseIfElseClause("start check", "if", token[1])
     elif token[0] == "syntax_elseif":
@@ -583,23 +635,7 @@ while 1:
         #tok = tok.replace("<-"," =")
         #print tok,
 
-    # -- helpers
-    elif token[0] == "helper_increment":
-        c_output = increment_or_decrement(token[1], "++")
-        print c_output
-    elif token[0] == "helper_decrement":
-        c_output = increment_or_decrement(token[1], "--")
-        print c_output
-    elif token[0] == "helper_typecast":
-        print "(typecast here)",                       # TODO
-    elif token[0] == "helper_subprogram":
-        translateFncall(token[1])
-    elif token[0] == "helper_return":
-        translateFnreturn(token[1])
-    elif token[0] == "helper_fnheader":
-        translateFnheader(token[1])
-    elif token[0] == "helper_fnfooter":
-        print "}"
+
 
     # -- blocks
     elif token[0] == "block_main":
